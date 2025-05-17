@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pi</title>
+    <link rel="icon" type="image/png" href="./logo.png" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: "Inter", Arial, sans-serif;
+        background-color: #000;
+        color: #fff;
+        overflow: hidden;
+      }
+
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        display: block;
+      }
+
+      .controls-panel {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 340px; /* Adjusted for potentially wider content */
+        background-color: rgba(20, 20, 20, 0.85);
+        backdrop-filter: blur(5px);
+        border-top-left-radius: 12px;
+        padding: 20px;
+        z-index: 10;
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(100%);
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .controls-panel.visible {
+        transform: translateY(0);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .controls button {
+        padding: 6px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 6px;
+        cursor: pointer;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+        font-size: 11px;
+        text-align: center; /* Ensure text is centered */
+        min-width: 0;
+      }
+      /* Removed .full-width class as all buttons will be single column now */
+
+      .controls button:hover {
+        background-color: #444;
+      }
+      .controls button:active {
+        transform: scale(0.95);
+      }
+
+      .credit-button {
+        font-weight: bold;
+        background-color: #d4af37; /* Gold color */
+        color: #000; /* Black text for better contrast on gold */
+      }
+
+      .credit-button:hover {
+        background-color: #f1ca59; /* Lighter gold on hover */
+      }
+
+      .slider-container {
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        margin: 15px 0;
+      }
+
+      .slider-label {
+        width: 160px; /* Adjusted width for new labels */
+        margin-right: 10px;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+
+      .slider {
+        flex-grow: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 8px;
+        background: #555;
+        border-radius: 4px;
+        outline: none;
+      }
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #007aff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: #007aff;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+      }
+
+      .slider-value {
+        width: 50px; /* Adjusted width to accommodate potentially larger values (e.g., 10.0) */
+        margin-left: 10px;
+        text-align: right;
+        font-size: 14px;
+        background-color: #222;
+        padding: 3px 6px;
+        border-radius: 4px;
+      }
+
+      .toggle-controls {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: rgba(30, 30, 30, 0.8);
+        backdrop-filter: blur(5px);
+        border: 1px solid #555;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 11;
+        font-size: 24px;
+        transition: background-color 0.2s;
+      }
+      .toggle-controls:hover {
+        background-color: rgba(50, 50, 50, 0.9);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <canvas id="canvas"></canvas>
+
+      <div class="toggle-controls" id="toggle-controls">⚙️</div>
+
+      <div class="controls-panel" id="controls-panel">
+        <div class="controls">
+          <button id="play-pause">Pause</button>
+          <button id="reset">Reset Sim</button>
+          <button id="toggle-trail">Hide Trail</button>
+          <button id="toggle-arms">Hide Arms</button>
+          <button id="reset-defaults">Reset Defaults</button>
+          <button id="randomize-settings">Randomize</button>
+          <button id="download-settings">Save Settings</button>
+          <button id="download-image">Download Image</button>
+          <button id="clear-screen">Clear Screen</button>
+          <button id="credit" class="credit-button">Credit</button>
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-row">
+            <div class="slider-label">Speed:</div>
+            <input
+              type="range"
+              min="1"
+              max="1000"
+              value="50"
+              class="slider"
+              id="speed-slider"
+            />
+            <div class="slider-value" id="speed-value">50</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Inner Arm (L1):</div>
+            <input
+              type="range"
+              min="10"
+              max="500"
+              value="120"
+              class="slider"
+              id="inner-length-slider"
+            />
+            <div class="slider-value" id="inner-length-value">120</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Outer Arm (L2):</div>
+            <input
+              type="range"
+              min="10"
+              max="500"
+              value="120"
+              class="slider"
+              id="outer-length-slider"
+            />
+            <div class="slider-value" id="outer-length-value">120</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Trail Length:</div>
+            <input
+              type="range"
+              min="100"
+              max="50000"
+              value="2000"
+              class="slider"
+              id="trail-slider"
+            />
+            <div class="slider-value" id="trail-value">2000</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Arm Draw Skip:</div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+              class="slider"
+              id="arm-draw-skip-slider"
+            />
+            <div class="slider-value" id="arm-draw-skip-value">0</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Line Thickness:</div>
+            <input
+              type="range"
+              min="0.1"
+              max="10"
+              value="1.5"
+              step="0.1"
+              class="slider"
+              id="line-width-slider"
+            />
+            <div class="slider-value" id="line-width-value">1.5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const playPauseBtn = document.getElementById("play-pause");
+      const resetBtn = document.getElementById("reset");
+      const toggleTrailBtn = document.getElementById("toggle-trail");
+      const toggleArmsBtn = document.getElementById("toggle-arms");
+      const toggleControlsBtn = document.getElementById("toggle-controls");
+      const controlsPanel = document.getElementById("controls-panel");
+      const downloadSettingsBtn = document.getElementById("download-settings");
+      const resetDefaultsBtn = document.getElementById("reset-defaults");
+      const randomizeSettingsBtn =
+        document.getElementById("randomize-settings");
+      const downloadImageBtn = document.getElementById("download-image");
+      const clearScreenBtn = document.getElementById("clear-screen");
+      const creditBtn = document.getElementById("credit");
+
+      const speedSlider = document.getElementById("speed-slider");
+      const innerLengthSlider = document.getElementById("inner-length-slider");
+      const outerLengthSlider = document.getElementById("outer-length-slider");
+      const trailSlider = document.getElementById("trail-slider");
+      const armDrawSkipSlider = document.getElementById("arm-draw-skip-slider");
+      const lineWidthSlider = document.getElementById("line-width-slider");
+
+      const speedValue = document.getElementById("speed-value");
+      const innerLengthValue = document.getElementById("inner-length-value");
+      const outerLengthValue = document.getElementById("outer-length-value");
+      const trailValue = document.getElementById("trail-value");
+      const armDrawSkipValue = document.getElementById("arm-draw-skip-value");
+      const lineWidthValue = document.getElementById("line-width-value");
+
+      // --- DEFAULT SETTINGS ---
+      const DEFAULT_SETTINGS = {
+        speed: 50,
+        innerArmLength: 120,
+        outerArmLength: 120,
+        trailLength: 2000,
+        showTrail: true,
+        showArms: true,
+        armDrawSkipFrames: 0,
+        lineWidth: 1.5,
+      };
+
+      // App state
+      let animationId;
+      let isPlaying = true;
+      let showTrail = DEFAULT_SETTINGS.showTrail;
+      let showArms = DEFAULT_SETTINGS.showArms;
+      let showControls = false;
+      let theta = 0;
+      // Use an offscreen canvas for the pixel trail
+      let trailCanvas; 
+      let trailCtx;
+      // maxTrailLength is less relevant for permanent pixel trails but kept for settings consistency
+      let maxTrailLength = DEFAULT_SETTINGS.trailLength; 
+
+      let animationFrameCounter = 0;
+      let trailSkipFrames = 0;
+      let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames;
+      let currentLineWidth = DEFAULT_SETTINGS.lineWidth;
+
+      // Initialize canvas size
+      function setupCanvas() {
+        const oldWidth = canvas.width;
+        const oldHeight = canvas.height;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Create or resize trail canvas
+        if (!trailCanvas) {
+          trailCanvas = document.createElement('canvas');
+          trailCtx = trailCanvas.getContext('2d', { willReadFrequently: true }); // willReadFrequently for getImageData
+        } else {
+          // If trailCanvas exists, save its content to redraw after resize
+          const tempImg = document.createElement('canvas');
+          const tempCtx = tempImg.getContext('2d');
+          tempImg.width = oldWidth;
+          tempImg.height = oldHeight;
+          if(oldWidth > 0 && oldHeight > 0) tempCtx.drawImage(trailCanvas, 0, 0);
+          
+          trailCanvas.width = canvas.width;
+          trailCanvas.height = canvas.height;
+          trailCtx.fillStyle = '#000'; // Default background
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+          if(oldWidth > 0 && oldHeight > 0) trailCtx.drawImage(tempImg, 0, 0); // Redraw old content
+          return; // Skip repositioning logic for pixel canvas
+        }
+        
+        trailCanvas.width = canvas.width;
+        trailCanvas.height = canvas.height;
+        trailCtx.fillStyle = '#000';
+        trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+      }
+
+      // App parameters
+      let innerArmLength, outerArmLength, speed;
+
+      function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+      }
+
+      // Setup event listeners
+      function setupEventListeners() {
+        playPauseBtn.addEventListener("click", togglePlayPause);
+        resetBtn.addEventListener("click", resetAnimation);
+        toggleTrailBtn.addEventListener("click", toggleTrail);
+        toggleArmsBtn.addEventListener("click", toggleArms);
+        toggleControlsBtn.addEventListener("click", toggleControls);
+        downloadSettingsBtn.addEventListener("click", downloadSettings);
+        resetDefaultsBtn.addEventListener("click", resetToDefaultSettings);
+        randomizeSettingsBtn.addEventListener("click", setRandomSettings);
+        downloadImageBtn.addEventListener("click", downloadCanvasAsImage);
+        clearScreenBtn.addEventListener("click", clearScreen);
+        creditBtn.addEventListener("click", openCreditLink);
+
+        speedSlider.addEventListener("input", updateSpeed);
+        innerLengthSlider.addEventListener("input", updateInnerLength);
+        outerLengthSlider.addEventListener("input", updateOuterLength);
+        trailSlider.addEventListener("input", updateTrailLength);
+        armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames);
+        lineWidthSlider.addEventListener("input", updateLineWidth);
+
+        window.addEventListener("resize", debounce(setupCanvas, 150));
+      }
+
+      // --- Settings Update Functions ---
+      function updateSpeed() {
+        const val = parseInt(speedSlider.value, 10);
+        speedValue.textContent = val;
+        speed = val / 1000;
+      }
+
+      function updateInnerLength() {
+        const val = parseInt(innerLengthSlider.value, 10);
+        innerLengthValue.textContent = val;
+        innerArmLength = val;
+      }
+
+      function updateOuterLength() {
+        const val = parseInt(outerLengthSlider.value, 10);
+        outerLengthValue.textContent = val;
+        outerArmLength = val;
+      }
+
+      function updateTrailLength() {
+        trailValue.textContent = trailSlider.value;
+        maxTrailLength = parseInt(trailSlider.value, 10);
+        // trailSkipFrames is not used in pixel mode
+        // Adaptive complexity cap for MAX_PIXEL_DENSITY_SEGMENTS is also not directly applicable
+        // to permanent pixel trails in the same way as line segment trails.
+      }
+
+      function updateArmDrawSkipFrames() {
+        const val = parseInt(armDrawSkipSlider.value, 10);
+        armDrawSkipValue.textContent = val;
+        armDrawSkipFrames = val;
+      }
+
+      function updateLineWidth() {
+        const val = parseFloat(lineWidthSlider.value);
+        lineWidthValue.textContent = val.toFixed(1);
+        currentLineWidth = val;
+      }
+
+      // --- Control Button Handlers ---
+      function togglePlayPause() {
+        isPlaying = !isPlaying;
+        playPauseBtn.textContent = isPlaying ? "Pause" : "Play";
+        if (isPlaying) animate();
+        else cancelAnimationFrame(animationId);
+      }
+
+      function resetAnimation() {
+        theta = 0;
+        if (trailCanvas) {
+          trailCtx.fillStyle = '#000';
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+        }
+        animationFrameCounter = 0;
+
+        drawBackground();
+        if (showArms) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const initialInnerEndX = centerX + innerArmLength * Math.cos(0);
+          const initialInnerEndY = centerY + innerArmLength * Math.sin(0);
+          const initialOuterEndX =
+            initialInnerEndX + outerArmLength * Math.cos(0);
+          const initialOuterEndY =
+            initialInnerEndY + outerArmLength * Math.sin(0);
+          const tempLineWidth = ctx.lineWidth;
+          ctx.lineWidth = currentLineWidth;
+          drawArms(
+            centerX,
+            centerY,
+            initialInnerEndX,
+            initialInnerEndY,
+            initialOuterEndX,
+            initialOuterEndY,
+          );
+          ctx.lineWidth = tempLineWidth;
+        }
+
+        if (isPlaying) {
+          cancelAnimationFrame(animationId);
+          animate();
+        }
+      }
+
+      function toggleTrail() {
+        showTrail = !showTrail;
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+      }
+
+      function toggleArms() {
+        showArms = !showArms;
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+      }
+
+      function toggleControls() {
+        showControls = !showControls;
+        controlsPanel.classList.toggle("visible", showControls);
+      }
+
+      function downloadSettings() {
+        const settings = {
+          timestamp: Date.now(),
+          speed: parseInt(speedSlider.value, 10),
+          innerArmLength: parseInt(innerLengthSlider.value, 10),
+          outerArmLength: parseInt(outerLengthSlider.value, 10),
+          trailLength: parseInt(trailSlider.value, 10),
+          armDrawSkipFrames: parseInt(armDrawSkipSlider.value, 10),
+          lineWidth: parseFloat(lineWidthSlider.value),
+          showTrail: showTrail,
+          showArms: showArms,
+        };
+
+        console.log("Pi Visualization Settings:", settings);
+
+        const uuid = crypto.randomUUID
+          ? crypto.randomUUID()
+          : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+              (
+                c ^
+                (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+              ).toString(16),
+            );
+
+        const settingsJSON = JSON.stringify(settings, null, 2);
+        const blob = new Blob([settingsJSON], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `pi_viz_settings_${uuid}.json`;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      }
+
+      function resetToDefaultSettings() {
+        speedSlider.value = DEFAULT_SETTINGS.speed;
+        innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
+        outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
+        trailSlider.value = DEFAULT_SETTINGS.trailLength;
+        armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+        lineWidthSlider.value = DEFAULT_SETTINGS.lineWidth;
+
+        showTrail = DEFAULT_SETTINGS.showTrail;
+        showArms = DEFAULT_SETTINGS.showArms;
+
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength();
+        updateArmDrawSkipFrames();
+        updateLineWidth();
+
+        resetAnimation();
+      }
+
+      function setRandomSettings() {
+        speedSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(speedSlider.max, 10) -
+                parseInt(speedSlider.min, 10) +
+                1),
+          ) + parseInt(speedSlider.min, 10);
+        innerLengthSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(innerLengthSlider.max, 10) -
+                parseInt(innerLengthSlider.min, 10) +
+                1),
+          ) + parseInt(innerLengthSlider.min, 10);
+        outerLengthSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(outerLengthSlider.max, 10) -
+                parseInt(outerLengthSlider.min, 10) +
+                1),
+          ) + parseInt(outerLengthSlider.min, 10);
+        trailSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(trailSlider.max, 10) -
+                parseInt(trailSlider.min, 10) +
+                1),
+          ) + parseInt(trailSlider.min, 10);
+        armDrawSkipSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(armDrawSkipSlider.max, 10) -
+                parseInt(armDrawSkipSlider.min, 10) +
+                1),
+          ) + parseInt(armDrawSkipSlider.min, 10);
+        lineWidthSlider.value =
+          (Math.floor(
+            Math.random() *
+              (parseFloat(lineWidthSlider.max) * 10 -
+                parseFloat(lineWidthSlider.min) * 10 +
+                1),
+          ) +
+            parseFloat(lineWidthSlider.min) * 10) /
+          10;
+
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength();
+        updateArmDrawSkipFrames();
+        updateLineWidth();
+
+        resetAnimation();
+      }
+
+      function downloadCanvasAsImage() {
+        if (!isPlaying) {
+          drawBackground();
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const innerThetaVal = theta;
+          const innerEndXVal =
+            centerX + innerArmLength * Math.cos(innerThetaVal);
+          const innerEndYVal =
+            centerY + innerArmLength * Math.sin(innerThetaVal);
+          const outerArmAngleVal = Math.PI * innerThetaVal;
+          const outerEndXVal =
+            innerEndXVal + outerArmLength * Math.cos(outerArmAngleVal);
+          const outerEndYVal =
+            innerEndYVal + outerArmLength * Math.sin(outerArmAngleVal);
+
+          drawTrailOptimized();
+          if (showArms) {
+            drawArms(
+              centerX,
+              centerY,
+              innerEndXVal,
+              innerEndYVal,
+              outerEndXVal,
+              outerEndYVal,
+            );
+          }
+        }
+
+        canvas.toBlob(function(blob) {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `pi_visualization_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          } else {
+            console.error("Failed to create blob from canvas.");
+          }
+        }, 'image/png');
+      }
+
+      function clearScreen() {
+        if (trailCanvas) {
+          trailCtx.fillStyle = '#000';
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+        }
+        drawBackground(); // Clear the main canvas immediately
+        if (showArms) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const innerEndX = centerX + innerArmLength * Math.cos(theta);
+          const innerEndY = centerY + innerArmLength * Math.sin(theta);
+          const outerEndX =
+            innerEndX + outerArmLength * Math.cos(Math.PI * theta);
+          const outerEndY =
+            innerEndY + outerArmLength * Math.sin(Math.PI * theta);
+          drawArms(
+            centerX,
+            centerY,
+            innerEndX,
+            innerEndY,
+            outerEndX,
+            outerEndY,
+          );
+        }
+      }
+
+      function openCreditLink() {
+        window.open("https://www.youtube.com/shorts/aUDYWYqtAR4", "_blank");
+      }
+
+      // --- Drawing Functions ---
+      function drawBackground() {
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawArms(
+        centerX,
+        centerY,
+        innerEndX,
+        innerEndY,
+        outerEndX,
+        outerEndY,
+      ) {
+        ctx.strokeStyle = "rgba(220, 220, 220, 0.7)";
+        ctx.fillStyle = "#fff";
+        ctx.lineWidth = currentLineWidth;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(innerEndX, innerEndY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(innerEndX, innerEndY, 4, 0, 2 * Math.PI);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(innerEndX, innerEndY);
+        ctx.lineTo(outerEndX, outerEndY);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.arc(outerEndX, outerEndY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+      }
+
+      function drawTrailOptimized() {
+        if (!showTrail || !trailCanvas) return;
+        ctx.drawImage(trailCanvas, 0, 0);
+      }
+
+      function updateTrailPixel(x, y) {
+        if (!showTrail || !trailCtx) return;
+        
+        x = Math.round(x);
+        y = Math.round(y);
+        
+        if (x < 0 || x >= trailCanvas.width || y < 0 || y >= trailCanvas.height) return;
+        
+        const pixelData = trailCtx.getImageData(x, y, 1, 1).data;
+        const isBlack = pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
+        
+        if (isBlack) {
+          trailCtx.fillStyle = "#fff";
+          trailCtx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      function drawTrail() {
+        if (!showTrail || !trailCanvas) return;
+        ctx.drawImage(trailCanvas, 0, 0);
+      }
+
+      // --- Animation Loop ---
+      function animate() {
+        if (!isPlaying) return;
+
+        animationId = requestAnimationFrame(animate);
+        drawBackground();
+
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const innerThetaVal = theta;
+        const innerEndX = centerX + innerArmLength * Math.cos(innerThetaVal);
+        const innerEndY = centerY + innerArmLength * Math.sin(innerThetaVal);
+        const outerArmAngle = Math.PI * innerThetaVal;
+        const outerEndX = innerEndX + outerArmLength * Math.cos(outerArmAngle);
+        const outerEndY = innerEndY + outerArmLength * Math.sin(outerArmAngle);
+
+        // Update trail pixel instead of adding to a buffer
+        updateTrailPixel(outerEndX, outerEndY);
+
+        // Draw trail from offscreen canvas
+        drawTrail();
+
+        if (showArms && animationFrameCounter % (armDrawSkipFrames + 1) === 0) {
+          drawArms(
+            centerX,
+            centerY,
+            innerEndX,
+            innerEndY,
+            outerEndX,
+            outerEndY,
+          );
+        }
+
+        animationFrameCounter++;
+        theta += speed;
+      }
+
+      // --- Initialize the App ---
+      function init() {
+        // const localCtx = canvas.getContext('2d', { alpha: false }); // Already set at top level
+
+        speedSlider.value = DEFAULT_SETTINGS.speed;
+        innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
+        outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
+        trailSlider.value = DEFAULT_SETTINGS.trailLength;
+        armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+        lineWidthSlider.value = DEFAULT_SETTINGS.lineWidth;
+
+        showTrail = DEFAULT_SETTINGS.showTrail;
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+        showArms = DEFAULT_SETTINGS.showArms;
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength();
+        updateArmDrawSkipFrames();
+        updateLineWidth();
+
+        setupCanvas(); // Call setupCanvas first to set dimensions and init trailCanvas
+        // No need to initialize trail.x/y Float32Arrays anymore
+
+        setupEventListeners();
+        animate();
+      }
+
+      // Start the app
+      init();
+    </script>
+  </body>
+</html>
