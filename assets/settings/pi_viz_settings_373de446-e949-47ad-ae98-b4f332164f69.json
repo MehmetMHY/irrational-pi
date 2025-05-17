@@ -1,0 +1,12 @@
+{
+  "timestamp": 1747517993839,
+  "speed": 42,
+  "innerArmLength": 100,
+  "outerArmLength": 346,
+  "trailLength": 13870,
+  "armDrawSkipFrames": 98,
+  "lineWidth": 0.4,
+  "showTrail": true,
+  "showArms": false,
+  "pixelMode": false
+}

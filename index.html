@@ -43,7 +43,7 @@
         position: fixed;
         bottom: 0;
         right: 0;
-        width: 340px; /* Adjusted for potentially wider content */
+        width: 340px;
         background-color: rgba(20, 20, 20, 0.85);
         backdrop-filter: blur(5px);
         border-top-left-radius: 12px;
@@ -62,7 +62,7 @@
 
       .controls {
         display: grid;
-        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        grid-template-columns: 1fr 1fr;
         gap: 10px;
         margin-bottom: 20px;
       }
@@ -78,10 +78,9 @@
           background-color 0.2s,
           transform 0.1s;
         font-size: 11px;
-        text-align: center; /* Ensure text is centered */
+        text-align: center;
         min-width: 0;
       }
-      /* Removed .full-width class as all buttons will be single column now */
 
       .controls button:hover {
         background-color: #444;
@@ -92,12 +91,12 @@
 
       .credit-button {
         font-weight: bold;
-        background-color: #d4af37; /* Gold color */
-        color: #000; /* Black text for better contrast on gold */
+        background-color: #d4af37;
+        color: #000;
       }
 
       .credit-button:hover {
-        background-color: #f1ca59; /* Lighter gold on hover */
+        background-color: #f1ca59;
       }
 
       .slider-container {
@@ -112,7 +111,7 @@
       }
 
       .slider-label {
-        width: 160px; /* Adjusted width for new labels */
+        width: 160px;
         margin-right: 10px;
         font-size: 14px;
         white-space: nowrap;
@@ -146,14 +145,14 @@
       }
 
       .slider-value {
-        width: 50px; /* Adjusted width to accommodate potentially larger values (e.g., 10.0) */
+        width: 50px;
         margin-left: 10px;
         text-align: right;
         font-size: 14px;
         background-color: #222;
         padding: 3px 6px;
         border-radius: 4px;
-        display: none; /* Hide the original display divs */
+        display: none;
       }
 
       .slider-input {
@@ -226,7 +225,7 @@
           />
           <button id="download-image">Download Image</button>
           <button id="clear-screen">Clear Screen</button>
-          <button id="credit" class="credit-button">Credit</button>
+          <button id="credit" class="credit-button">⭐ Credit</button>
           <button id="toggle-pixel-mode">Pixel Mode: Off</button>
         </div>
 
@@ -404,7 +403,7 @@
       const armDrawSkipInput = document.getElementById("arm-draw-skip-input");
       const lineWidthInput = document.getElementById("line-width-input");
 
-      // --- DEFAULT SETTINGS ---
+      // default settings
       const DEFAULT_SETTINGS = {
         speed: 50,
         innerArmLength: 120,
@@ -417,7 +416,7 @@
         lineWidth: 1.5,
       };
 
-      // App state
+      // app state
       let animationId;
       let isPlaying = true;
       let showTrail = DEFAULT_SETTINGS.showTrail;
@@ -435,11 +434,11 @@
       let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames;
       let currentLineWidth = DEFAULT_SETTINGS.lineWidth;
 
-      // For pixel mode
+      // for pixel mode
       let trailCanvas;
       let trailCtx;
 
-      // Initialize canvas size
+      // initialize canvas size
       function setupCanvas() {
         const oldWidth = canvas.width || window.innerWidth;
         const oldHeight = canvas.height || window.innerHeight;
@@ -451,15 +450,15 @@
         const newCenterX = newWidth / 2;
         const newCenterY = newHeight / 2;
 
-        // Calculate offsets for repositioning trail points
+        // calculate offsets for repositioning trail points
         const offsetX = newCenterX - oldCenterX;
         const offsetY = newCenterY - oldCenterY;
 
-        // Update canvas dimensions
+        // update canvas dimensions
         canvas.width = newWidth;
         canvas.height = newHeight;
 
-        // Reposition all trail points relative to new center
+        // reposition all trail points relative to new center
         for (let i = 0; i < trail.length; i++) {
           if (trail[i]) {
             trail[i].x += offsetX;
@@ -467,20 +466,20 @@
           }
         }
 
-        // Initialize or resize pixel mode canvas
+        // initialize or resize pixel mode canvas
         if (!trailCanvas) {
           trailCanvas = document.createElement("canvas");
           trailCtx = trailCanvas.getContext("2d", { willReadFrequently: true });
         }
 
-        // If switching modes or resizing, we need to setup the pixel canvas
+        // if switching modes or resizing, we need to setup the pixel canvas
         const pixelCanvasNeedsSetup =
           !trailCanvas ||
           trailCanvas.width !== newWidth ||
           trailCanvas.height !== newHeight;
 
         if (pixelCanvasNeedsSetup) {
-          // Save current content if it exists
+          // save current content if it exists
           let tempImg;
           if (trailCanvas.width > 0 && trailCanvas.height > 0) {
             tempImg = document.createElement("canvas");
@@ -490,20 +489,20 @@
             tempCtx.drawImage(trailCanvas, 0, 0);
           }
 
-          // Resize pixel canvas
+          // resize pixel canvas
           trailCanvas.width = newWidth;
           trailCanvas.height = newHeight;
           trailCtx.fillStyle = "#000";
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
 
-          // Restore content if we had any
+          // restore content if we had any
           if (tempImg) {
             trailCtx.drawImage(tempImg, 0, 0);
           }
         }
       }
 
-      // App parameters
+      // app parameters
       let innerArmLength, outerArmLength, speed;
 
       function debounce(func, delay) {
@@ -514,7 +513,7 @@
         };
       }
 
-      // Setup event listeners
+      // setup event listeners
       function setupEventListeners() {
         playPauseBtn.addEventListener("click", togglePlayPause);
         resetBtn.addEventListener("click", resetAnimation);
@@ -541,7 +540,7 @@
         armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames);
         lineWidthSlider.addEventListener("input", updateLineWidth);
 
-        // Add listeners for text inputs
+        // add listeners for text inputs
         speedInput.addEventListener("change", updateSpeedFromInput);
         innerLengthInput.addEventListener("change", updateInnerLengthFromInput);
         outerLengthInput.addEventListener("change", updateOuterLengthFromInput);
@@ -549,7 +548,7 @@
         armDrawSkipInput.addEventListener("change", updateArmDrawSkipFromInput);
         lineWidthInput.addEventListener("change", updateLineWidthFromInput);
 
-        // Add blur events to apply changes when focus leaves the input
+        // add blur events to apply changes when focus leaves the input
         speedInput.addEventListener("blur", updateSpeedFromInput);
         innerLengthInput.addEventListener("blur", updateInnerLengthFromInput);
         outerLengthInput.addEventListener("blur", updateOuterLengthFromInput);
@@ -560,7 +559,7 @@
         window.addEventListener("resize", debounce(setupCanvas, 150));
       }
 
-      // --- Settings Update Functions ---
+      // settings update functions
       function updateSpeed() {
         const val = parseInt(speedSlider.value, 10);
         speedValue.textContent = val;
@@ -610,9 +609,6 @@
         trailValue.textContent = trailSlider.value;
         trailInput.value = trailSlider.value;
         maxTrailLength = parseInt(trailSlider.value, 10);
-        // trailSkipFrames is not used in pixel mode
-        // Adaptive complexity cap for MAX_PIXEL_DENSITY_SEGMENTS is also not directly applicable
-        // to permanent pixel trails in the same way as line segment trails.
       }
 
       function updateTrailLengthFromInput() {
@@ -654,7 +650,7 @@
         currentLineWidth = val;
       }
 
-      // --- Control Button Handlers ---
+      // control button handlers
       function togglePlayPause() {
         isPlaying = !isPlaying;
         playPauseBtn.textContent = isPlaying ? "Pause" : "Play";
@@ -664,7 +660,7 @@
         } else {
           cancelAnimationFrame(animationId);
 
-          // If hideArmsWhenPaused is true, redraw the scene without arms
+          // when hideArmsWhenPaused is true, redraw the scene without arms
           if (hideArmsWhenPaused && showArms) {
             drawBackground();
             drawTrailOptimized();
@@ -716,12 +712,12 @@
         showArms = !showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
 
-        // If paused and arms were just enabled or disabled, refresh the display
+        // when paused and arms were just enabled or disabled, refresh the display
         if (!isPlaying) {
           drawBackground();
           drawTrailOptimized();
 
-          // Only draw arms if showArms is true and we're not hiding arms when paused
+          // only draw arms if showArms is true and we're not hiding arms when paused
           if (showArms && !hideArmsWhenPaused) {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
@@ -749,12 +745,12 @@
           ? "Show Arms When Paused"
           : "Hide Arms When Paused";
 
-        // If currently paused, update the display to reflect the new setting
+        // when currently paused, update the display to reflect the new setting
         if (!isPlaying) {
           drawBackground();
           drawTrailOptimized();
 
-          // Draw arms only if they should be visible
+          // draw arms only if they should be visible
           if (showArms && !hideArmsWhenPaused) {
             const centerX = canvas.width / 2;
             const centerY = canvas.height / 2;
@@ -787,7 +783,7 @@
           ? "Pixel Mode: On"
           : "Pixel Mode: Off";
 
-        // If switching to pixel mode, initialize the trail canvas if it doesn't exist
+        // when switching to pixel mode, initialize the trail canvas if it doesn't exist
         if (pixelMode && (!trailCanvas || !trailCtx)) {
           trailCanvas = document.createElement("canvas");
           trailCtx = trailCanvas.getContext("2d", { willReadFrequently: true });
@@ -797,7 +793,7 @@
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
         }
 
-        // Clear the current visualization and start fresh
+        // clear the current visualization and start fresh
         clearScreen();
       }
 
@@ -816,7 +812,7 @@
           pixelMode: pixelMode,
         };
 
-        // Log settings to console in case download is blocked
+        // log settings to console in case download is blocked
         console.log("Pi Visualization Settings:", settings);
 
         const uuid = crypto.randomUUID
@@ -971,7 +967,7 @@
         trail = new Array(maxTrailLength);
         trailIndex = 0;
 
-        // Clear pixel canvas if in pixel mode
+        // clear pixel canvas if in pixel mode
         if (pixelMode && trailCanvas) {
           trailCtx.fillStyle = "#000";
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
@@ -1002,7 +998,7 @@
         window.open("https://www.youtube.com/shorts/aUDYWYqtAR4", "_blank");
       }
 
-      // --- Drawing Functions ---
+      // drawing functions
       function drawBackground() {
         ctx.fillStyle = "rgba(0, 0, 0, 1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1045,7 +1041,7 @@
       }
 
       function drawTrailOptimized() {
-        // If in pixel mode, use the pixel-based trail drawing
+        // when in pixel mode, use the pixel-based trail drawing
         if (pixelMode) {
           drawPixelTrail();
           return;
@@ -1096,7 +1092,7 @@
         ctx.stroke();
       }
 
-      // Pixel-based trail functions
+      // pixel-based trail functions
       function updateTrailPixel(x, y) {
         if (!showTrail || !trailCtx) return;
 
@@ -1121,34 +1117,34 @@
         ctx.drawImage(trailCanvas, 0, 0);
       }
 
-      // --- Animation Loop ---
+      // animation loop
       function animate() {
         if (!isPlaying) return;
 
         animationId = requestAnimationFrame(animate);
 
-        // Clear canvas
+        // clear canvas
         drawBackground();
 
-        // Calculate positions
+        // calculate positions
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
 
-        // Inner arm end position
+        // inner arm end position
         const innerTheta = theta;
         const innerEndX = centerX + innerArmLength * Math.cos(innerTheta);
         const innerEndY = centerY + innerArmLength * Math.sin(innerTheta);
 
-        // Outer arm end position - rotates PI times faster
+        // outer arm end position, rotates PI times faster
         const outerTheta = Math.PI * theta;
         const outerEndX = innerEndX + outerArmLength * Math.cos(outerTheta);
         const outerEndY = innerEndY + outerArmLength * Math.sin(outerTheta);
 
         if (pixelMode) {
-          // Update trail pixel
+          // update trail pixel
           updateTrailPixel(outerEndX, outerEndY);
         } else {
-          // Add point to trail
+          // add point to trail
           if (
             animationFrameCounter % (trailSkipFrames + 1) === 0 &&
             maxTrailLength > 0
@@ -1158,7 +1154,7 @@
           }
         }
 
-        // Draw elements
+        // draw elements
         drawTrailOptimized();
 
         if (showArms && animationFrameCounter % (armDrawSkipFrames + 1) === 0) {
@@ -1181,7 +1177,7 @@
         trail = new Array(maxTrailLength);
         trailIndex = 0;
 
-        // Clear pixel canvas if using pixel mode
+        // clear pixel canvas if using pixel mode
         if (pixelMode && trailCanvas) {
           trailCtx.fillStyle = "#000";
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
@@ -1194,7 +1190,7 @@
         }
       }
 
-      // --- Initialize the App ---
+      // initialize the app
       function init() {
         speedSlider.value = DEFAULT_SETTINGS.speed;
         innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
@@ -1225,7 +1221,7 @@
         animate();
       }
 
-      // Start the app
+      // start the app
       init();
 
       function loadSettingsFromFile(event) {
@@ -1237,7 +1233,7 @@
           try {
             const settings = JSON.parse(e.target.result);
 
-            // Apply loaded settings to the UI and visualization
+            // apply loaded settings to the UI and visualization
             if (settings.speed !== undefined) {
               speedSlider.value = settings.speed;
               speedInput.value = settings.speed;
@@ -1294,13 +1290,13 @@
             }
 
             if (settings.pixelMode !== undefined) {
-              // Only change mode if needed
+              // only change mode if needed
               if (pixelMode !== settings.pixelMode) {
                 togglePixelMode();
               }
             }
 
-            // Reset the visualization with new settings
+            // reset the visualization with new settings
             reset();
 
             console.log("Settings loaded successfully:", settings);
@@ -1311,14 +1307,14 @@
             );
           }
 
-          // Clear the file input so the same file can be selected again
+          // clear the file input so the same file can be selected again
           settingsFileInput.value = "";
         };
 
         reader.readAsText(file);
       }
 
-      // Helper function to validate number input
+      // helper function to validate number input
       function validateNumberInput(input, isFloat = false) {
         const min = parseFloat(input.dataset.min);
         const max = parseFloat(input.dataset.max);
@@ -1336,7 +1332,7 @@
           }
         }
 
-        // Ensure value is within bounds
+        // ensure value is within bounds
         if (value < min) value = min;
         if (value > max) value = max;
 
