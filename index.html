@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Pi Visualization - Enhanced</title>
+    <title>Pi</title>
+    <link rel="icon" type="image/png" href="./logo.png" />
     <style>
       body {
         margin: 0;
@@ -13,10 +14,10 @@
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        font-family: "Inter", Arial, sans-serif; /* Using Inter font */
+        font-family: "Inter", Arial, sans-serif;
         background-color: #000;
         color: #fff;
-        overflow: hidden; /* Prevents scrollbars if canvas slightly overflows */
+        overflow: hidden;
       }
 
       .container {
@@ -35,14 +36,14 @@
         width: 100%;
         height: 100%;
         z-index: 1;
-        display: block; /* Fix potential extra space below canvas */
+        display: block;
       }
 
       .controls-panel {
         position: fixed;
         bottom: 0;
         right: 0;
-        width: 320px; /* Slightly wider for new buttons */
+        width: 340px; /* Adjusted for potentially wider content */
         background-color: rgba(20, 20, 20, 0.85);
         backdrop-filter: blur(5px);
         border-top-left-radius: 12px;
@@ -60,14 +61,14 @@
       }
 
       .controls {
-        display: grid; /* Use grid for better button layout */
-        grid-template-columns: 1fr 1fr; /* Two columns */
-        gap: 10px; /* Gap between buttons */
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+        gap: 10px;
         margin-bottom: 20px;
       }
 
       .controls button {
-        padding: 10px 5px; /* Adjust padding for smaller buttons if needed */
+        padding: 6px;
         background-color: #333;
         color: white;
         border: 1px solid #555;
@@ -76,18 +77,27 @@
         transition:
           background-color 0.2s,
           transform 0.1s;
-        font-size: 13px; /* Slightly smaller font for more buttons */
-        min-width: 0; /* Allow buttons to shrink if text is short */
+        font-size: 11px;
+        text-align: center; /* Ensure text is centered */
+        min-width: 0;
       }
-      .controls button.full-width {
-        grid-column: span 2; /* Make a button span both columns */
-      }
+      /* Removed .full-width class as all buttons will be single column now */
 
       .controls button:hover {
         background-color: #444;
       }
       .controls button:active {
         transform: scale(0.95);
+      }
+
+      .credit-button {
+        font-weight: bold;
+        background-color: #d4af37; /* Gold color */
+        color: #000; /* Black text for better contrast on gold */
+      }
+
+      .credit-button:hover {
+        background-color: #f1ca59; /* Lighter gold on hover */
       }
 
       .slider-container {
@@ -102,7 +112,7 @@
       }
 
       .slider-label {
-        width: 150px; /* Adjusted width for potentially longer labels */
+        width: 160px; /* Adjusted width for new labels */
         margin-right: 10px;
         font-size: 14px;
         white-space: nowrap;
@@ -136,7 +146,7 @@
       }
 
       .slider-value {
-        width: 45px; /* Adjusted width */
+        width: 50px; /* Adjusted width to accommodate potentially larger values (e.g., 10.0) */
         margin-left: 10px;
         text-align: right;
         font-size: 14px;
@@ -180,15 +190,12 @@
           <button id="reset">Reset Sim</button>
           <button id="toggle-trail">Hide Trail</button>
           <button id="toggle-arms">Hide Arms</button>
-          <button id="reset-defaults" class="full-width">
-            Reset to Defaults
-          </button>
-          <button id="randomize-settings" class="full-width">
-            Randomize Settings
-          </button>
-          <button id="download-settings" class="full-width">
-            Download Settings
-          </button>
+          <button id="reset-defaults">Reset Defaults</button>
+          <button id="randomize-settings">Randomize</button>
+          <button id="download-settings">Save Settings</button>
+          <button id="download-image">Download Image</button>
+          <button id="clear-screen">Clear Screen</button>
+          <button id="credit" class="credit-button">Credit</button>
         </div>
 
         <div class="slider-container">
@@ -245,7 +252,7 @@
           </div>
 
           <div class="slider-row">
-            <div class="slider-label">Arm Draw Skip Frames:</div>
+            <div class="slider-label">Arm Draw Skip:</div>
             <input
               type="range"
               min="0"
@@ -255,6 +262,20 @@
               id="arm-draw-skip-slider"
             />
             <div class="slider-value" id="arm-draw-skip-value">0</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Line Thickness:</div>
+            <input
+              type="range"
+              min="0.1"
+              max="10"
+              value="1.5"
+              step="0.1"
+              class="slider"
+              id="line-width-slider"
+            />
+            <div class="slider-value" id="line-width-value">1.5</div>
           </div>
         </div>
       </div>
@@ -270,21 +291,26 @@
       const toggleControlsBtn = document.getElementById("toggle-controls");
       const controlsPanel = document.getElementById("controls-panel");
       const downloadSettingsBtn = document.getElementById("download-settings");
-      const resetDefaultsBtn = document.getElementById("reset-defaults"); // New button
+      const resetDefaultsBtn = document.getElementById("reset-defaults");
       const randomizeSettingsBtn =
-        document.getElementById("randomize-settings"); // New button
+        document.getElementById("randomize-settings");
+      const downloadImageBtn = document.getElementById("download-image");
+      const clearScreenBtn = document.getElementById("clear-screen");
+      const creditBtn = document.getElementById("credit");
 
       const speedSlider = document.getElementById("speed-slider");
       const innerLengthSlider = document.getElementById("inner-length-slider");
       const outerLengthSlider = document.getElementById("outer-length-slider");
       const trailSlider = document.getElementById("trail-slider");
-      const armDrawSkipSlider = document.getElementById("arm-draw-skip-slider"); // New slider
+      const armDrawSkipSlider = document.getElementById("arm-draw-skip-slider");
+      const lineWidthSlider = document.getElementById("line-width-slider");
 
       const speedValue = document.getElementById("speed-value");
       const innerLengthValue = document.getElementById("inner-length-value");
       const outerLengthValue = document.getElementById("outer-length-value");
       const trailValue = document.getElementById("trail-value");
-      const armDrawSkipValue = document.getElementById("arm-draw-skip-value"); // New slider value display
+      const armDrawSkipValue = document.getElementById("arm-draw-skip-value");
+      const lineWidthValue = document.getElementById("line-width-value");
 
       // --- DEFAULT SETTINGS ---
       const DEFAULT_SETTINGS = {
@@ -295,6 +321,7 @@
         showTrail: true,
         showArms: true,
         armDrawSkipFrames: 0,
+        lineWidth: 1.5,
       };
 
       // App state
@@ -309,8 +336,9 @@
       let maxTrailLength = DEFAULT_SETTINGS.trailLength;
 
       let animationFrameCounter = 0;
-      let trailSkipFrames = 0; // Renamed from skipFrames for clarity
-      let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames; // For arm drawing frequency
+      let trailSkipFrames = 0;
+      let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames;
+      let currentLineWidth = DEFAULT_SETTINGS.lineWidth;
 
       // Initialize canvas size
       function setupCanvas() {
@@ -337,7 +365,7 @@
         }
       }
 
-      // App parameters (will be set from sliders or defaults)
+      // App parameters
       let innerArmLength, outerArmLength, speed;
 
       function debounce(func, delay) {
@@ -356,14 +384,18 @@
         toggleArmsBtn.addEventListener("click", toggleArms);
         toggleControlsBtn.addEventListener("click", toggleControls);
         downloadSettingsBtn.addEventListener("click", downloadSettings);
-        resetDefaultsBtn.addEventListener("click", resetToDefaultSettings); // New listener
-        randomizeSettingsBtn.addEventListener("click", setRandomSettings); // New listener
+        resetDefaultsBtn.addEventListener("click", resetToDefaultSettings);
+        randomizeSettingsBtn.addEventListener("click", setRandomSettings);
+        downloadImageBtn.addEventListener("click", downloadCanvasAsImage);
+        clearScreenBtn.addEventListener("click", clearScreen);
+        creditBtn.addEventListener("click", openCreditLink);
 
         speedSlider.addEventListener("input", updateSpeed);
         innerLengthSlider.addEventListener("input", updateInnerLength);
         outerLengthSlider.addEventListener("input", updateOuterLength);
         trailSlider.addEventListener("input", updateTrailLength);
-        armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames); // New listener
+        armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames);
+        lineWidthSlider.addEventListener("input", updateLineWidth);
 
         window.addEventListener("resize", debounce(setupCanvas, 150));
       }
@@ -433,6 +465,12 @@
         armDrawSkipFrames = val;
       }
 
+      function updateLineWidth() {
+        const val = parseFloat(lineWidthSlider.value);
+        lineWidthValue.textContent = val.toFixed(1);
+        currentLineWidth = val;
+      }
+
       // --- Control Button Handlers ---
       function togglePlayPause() {
         isPlaying = !isPlaying;
@@ -451,14 +489,14 @@
         if (showArms) {
           const centerX = canvas.width / 2;
           const centerY = canvas.height / 2;
-          // For reset, always draw arms once if they are supposed to be shown, regardless of skipFrames
-          // The animation loop will then handle the skipping.
           const initialInnerEndX = centerX + innerArmLength * Math.cos(0);
           const initialInnerEndY = centerY + innerArmLength * Math.sin(0);
           const initialOuterEndX =
             initialInnerEndX + outerArmLength * Math.cos(0);
           const initialOuterEndY =
             initialInnerEndY + outerArmLength * Math.sin(0);
+          const tempLineWidth = ctx.lineWidth;
+          ctx.lineWidth = currentLineWidth;
           drawArms(
             centerX,
             centerY,
@@ -467,14 +505,12 @@
             initialOuterEndX,
             initialOuterEndY,
           );
+          ctx.lineWidth = tempLineWidth;
         }
 
         if (isPlaying) {
           cancelAnimationFrame(animationId);
           animate();
-        } else {
-          // If paused, we still want to redraw the current state after reset.
-          // No need to call animate() if paused. The static drawing is done.
         }
       }
 
@@ -486,8 +522,6 @@
       function toggleArms() {
         showArms = !showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
-        // If arms are hidden, the skip frames don't matter. If shown, they do.
-        // No direct change to armDrawSkipFrames here.
       }
 
       function toggleControls() {
@@ -502,7 +536,8 @@
           innerArmLength: parseInt(innerLengthSlider.value, 10),
           outerArmLength: parseInt(outerLengthSlider.value, 10),
           trailLength: parseInt(trailSlider.value, 10),
-          armDrawSkipFrames: parseInt(armDrawSkipSlider.value, 10), // Include new setting
+          armDrawSkipFrames: parseInt(armDrawSkipSlider.value, 10),
+          lineWidth: parseFloat(lineWidthSlider.value),
           showTrail: showTrail,
           showArms: showArms,
         };
@@ -529,33 +564,30 @@
       }
 
       function resetToDefaultSettings() {
-        // Set sliders to default values
         speedSlider.value = DEFAULT_SETTINGS.speed;
         innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
         outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
         trailSlider.value = DEFAULT_SETTINGS.trailLength;
         armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+        lineWidthSlider.value = DEFAULT_SETTINGS.lineWidth;
 
-        // Update state variables from defaults
         showTrail = DEFAULT_SETTINGS.showTrail;
         showArms = DEFAULT_SETTINGS.showArms;
 
-        // Update UI elements (button texts, slider value displays)
         toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
 
-        // Call update functions to apply changes and update dependent variables
         updateSpeed();
         updateInnerLength();
         updateOuterLength();
-        updateTrailLength(); // This also updates trailSkipFrames
+        updateTrailLength();
         updateArmDrawSkipFrames();
+        updateLineWidth();
 
-        resetAnimation(); // Reset the simulation visuals
+        resetAnimation();
       }
 
       function setRandomSettings() {
-        // Randomize Speed
         speedSlider.value =
           Math.floor(
             Math.random() *
@@ -563,8 +595,6 @@
                 parseInt(speedSlider.min, 10) +
                 1),
           ) + parseInt(speedSlider.min, 10);
-
-        // Randomize Inner Arm Length
         innerLengthSlider.value =
           Math.floor(
             Math.random() *
@@ -572,8 +602,6 @@
                 parseInt(innerLengthSlider.min, 10) +
                 1),
           ) + parseInt(innerLengthSlider.min, 10);
-
-        // Randomize Outer Arm Length
         outerLengthSlider.value =
           Math.floor(
             Math.random() *
@@ -581,8 +609,6 @@
                 parseInt(outerLengthSlider.min, 10) +
                 1),
           ) + parseInt(outerLengthSlider.min, 10);
-
-        // Randomize Trail Length
         trailSlider.value =
           Math.floor(
             Math.random() *
@@ -590,8 +616,6 @@
                 parseInt(trailSlider.min, 10) +
                 1),
           ) + parseInt(trailSlider.min, 10);
-
-        // Randomize Arm Draw Skip Frames
         armDrawSkipSlider.value =
           Math.floor(
             Math.random() *
@@ -599,21 +623,90 @@
                 parseInt(armDrawSkipSlider.min, 10) +
                 1),
           ) + parseInt(armDrawSkipSlider.min, 10);
+        lineWidthSlider.value =
+          (Math.floor(
+            Math.random() *
+              (parseFloat(lineWidthSlider.max) * 10 -
+                parseFloat(lineWidthSlider.min) * 10 +
+                1),
+          ) +
+            parseFloat(lineWidthSlider.min) * 10) /
+          10;
 
-        // Optionally, randomize toggles
-        // showTrail = Math.random() < 0.75; // 75% chance to show trail
-        // showArms = Math.random() < 0.85;  // 85% chance to show arms
-        // toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
-        // toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
-
-        // Call update functions to apply changes
         updateSpeed();
         updateInnerLength();
         updateOuterLength();
         updateTrailLength();
         updateArmDrawSkipFrames();
+        updateLineWidth();
 
-        resetAnimation(); // Reset the simulation visuals
+        resetAnimation();
+      }
+
+      function downloadCanvasAsImage() {
+        if (!isPlaying) {
+          drawBackground();
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const innerThetaVal = theta;
+          const innerEndXVal =
+            centerX + innerArmLength * Math.cos(innerThetaVal);
+          const innerEndYVal =
+            centerY + innerArmLength * Math.sin(innerThetaVal);
+          const outerArmAngleVal = Math.PI * innerThetaVal;
+          const outerEndXVal =
+            innerEndXVal + outerArmLength * Math.cos(outerArmAngleVal);
+          const outerEndYVal =
+            innerEndYVal + outerArmLength * Math.sin(outerArmAngleVal);
+
+          drawTrailOptimized();
+          if (showArms) {
+            drawArms(
+              centerX,
+              centerY,
+              innerEndXVal,
+              innerEndYVal,
+              outerEndXVal,
+              outerEndYVal,
+            );
+          }
+        }
+
+        const dataURL = canvas.toDataURL("image/png");
+        const a = document.createElement("a");
+        a.href = dataURL;
+        a.download = `pi_visualization_${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+
+      function clearScreen() {
+        trail = new Array(maxTrailLength);
+        trailIndex = 0;
+        drawBackground();
+        if (showArms) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          const innerEndX = centerX + innerArmLength * Math.cos(theta);
+          const innerEndY = centerY + innerArmLength * Math.sin(theta);
+          const outerEndX =
+            innerEndX + outerArmLength * Math.cos(Math.PI * theta);
+          const outerEndY =
+            innerEndY + outerArmLength * Math.sin(Math.PI * theta);
+          drawArms(
+            centerX,
+            centerY,
+            innerEndX,
+            innerEndY,
+            outerEndX,
+            outerEndY,
+          );
+        }
+      }
+
+      function openCreditLink() {
+        window.open("https://www.youtube.com/shorts/aUDYWYqtAR4", "_blank");
       }
 
       // --- Drawing Functions ---
@@ -630,11 +723,9 @@
         outerEndX,
         outerEndY,
       ) {
-        // This function is now only called if showArms is true AND skip frame condition is met.
-        // No need for an additional 'if (!showArms) return;' here.
         ctx.strokeStyle = "rgba(220, 220, 220, 0.7)";
         ctx.fillStyle = "#fff";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = currentLineWidth;
 
         ctx.beginPath();
         ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
@@ -656,7 +747,7 @@
 
         ctx.beginPath();
         ctx.arc(outerEndX, outerEndY, 4, 0, 2 * Math.PI);
-        ctx.fillStyle = "#00A0FF";
+        ctx.fillStyle = "#fff";
         ctx.fill();
       }
 
@@ -702,7 +793,7 @@
         }
 
         ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = currentLineWidth;
         ctx.stroke();
       }
 
@@ -715,14 +806,13 @@
 
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        const innerTheta = theta;
-        const innerEndX = centerX + innerArmLength * Math.cos(innerTheta);
-        const innerEndY = centerY + innerArmLength * Math.sin(innerTheta);
-        const outerArmAngle = Math.PI * theta;
+        const innerThetaVal = theta;
+        const innerEndX = centerX + innerArmLength * Math.cos(innerThetaVal);
+        const innerEndY = centerY + innerArmLength * Math.sin(innerThetaVal);
+        const outerArmAngle = Math.PI * innerThetaVal;
         const outerEndX = innerEndX + outerArmLength * Math.cos(outerArmAngle);
         const outerEndY = innerEndY + outerArmLength * Math.sin(outerArmAngle);
 
-        // Add point to trail (respecting trailSkipFrames)
         if (
           animationFrameCounter % (trailSkipFrames + 1) === 0 &&
           maxTrailLength > 0
@@ -733,7 +823,6 @@
 
         drawTrailOptimized();
 
-        // Draw arms (respecting showArms and armDrawSkipFrames)
         if (showArms && animationFrameCounter % (armDrawSkipFrames + 1) === 0) {
           drawArms(
             centerX,
@@ -751,25 +840,24 @@
 
       // --- Initialize the App ---
       function init() {
-        // Set initial slider values from defaults
         speedSlider.value = DEFAULT_SETTINGS.speed;
         innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
         outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
         trailSlider.value = DEFAULT_SETTINGS.trailLength;
         armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+        lineWidthSlider.value = DEFAULT_SETTINGS.lineWidth;
 
-        // Set initial state from defaults
         showTrail = DEFAULT_SETTINGS.showTrail;
         toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
         showArms = DEFAULT_SETTINGS.showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
 
-        // Call update functions to initialize state variables from sliders
         updateSpeed();
         updateInnerLength();
         updateOuterLength();
-        updateTrailLength(); // This also initializes trailSkipFrames
-        updateArmDrawSkipFrames(); // This initializes armDrawSkipFrames variable
+        updateTrailLength();
+        updateArmDrawSkipFrames();
+        updateLineWidth();
 
         setupCanvas();
         trail = new Array(maxTrailLength);
