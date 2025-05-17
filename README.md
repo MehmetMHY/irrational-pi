@@ -4,9 +4,9 @@
 
 <h1 align="center">Irrational Pi - Algorithm Art</h1>
 
-## Project Overview
+## About
 
-This project visualizes the irrational nature of Pi by using a double-arm [algorithmic system](https://en.wikipedia.org/wiki/Algorithmic_art). The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality.
+This is a project, created though [Vibe Coding](https://en.wikipedia.org/wiki/Vibe_coding), that visualizes the irrational nature of Pi by using a double-arm [algorithmic system](https://en.wikipedia.org/wiki/Algorithmic_art). The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality.
 
 ## Inspiration
 
