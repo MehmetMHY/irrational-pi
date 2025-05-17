@@ -1,0 +1,455 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pi Visualization - So Close Yet So Far</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        background-color: #000;
+        color: #fff;
+        overflow: hidden;
+      }
+
+      .container {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      .controls-panel {
+        position: fixed;
+        bottom: 0;
+        right: 0;
+        width: 300px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border-top-left-radius: 10px;
+        padding: 15px;
+        z-index: 2;
+        transition: transform 0.3s ease-in-out;
+        transform: translateY(100%);
+        max-height: 100vh;
+        overflow-y: auto;
+      }
+
+      .controls-panel.visible {
+        transform: translateY(0);
+      }
+
+      .controls {
+        display: flex;
+        width: 100%;
+        justify-content: space-around;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+      }
+
+      .controls button {
+        margin: 5px;
+        padding: 8px 12px;
+        background-color: #333;
+        color: white;
+        border: 1px solid #555;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .controls button:hover {
+        background-color: #444;
+      }
+
+      .slider-container {
+        width: 100%;
+        margin: 10px 0;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+      }
+
+      .slider-label {
+        width: 180px;
+        margin-right: 10px;
+        font-size: 14px;
+      }
+
+      .slider {
+        flex-grow: 1;
+      }
+
+      .slider-value {
+        width: 50px;
+        margin-left: 10px;
+        text-align: right;
+      }
+
+      .toggle-controls {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 1px solid #555;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 3;
+        font-size: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <canvas id="canvas"></canvas>
+
+      <div class="toggle-controls" id="toggle-controls">⚙️</div>
+
+      <div class="controls-panel" id="controls-panel">
+        <div class="controls">
+          <button id="play-pause">Pause</button>
+          <button id="reset">Reset</button>
+          <button id="toggle-trail">Hide Trail</button>
+          <button id="toggle-arms">Hide Arms</button>
+        </div>
+
+        <div class="slider-container">
+          <div class="slider-row">
+            <div class="slider-label">Speed:</div>
+            <input
+              type="range"
+              min="1"
+              max="1000"
+              value="50"
+              class="slider"
+              id="speed-slider"
+            />
+            <div class="slider-value" id="speed-value">50</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Inner Arm Length:</div>
+            <input
+              type="range"
+              min="10"
+              max="1000"
+              value="120"
+              class="slider"
+              id="inner-length-slider"
+            />
+            <div class="slider-value" id="inner-length-value">120</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Outer Arm Length:</div>
+            <input
+              type="range"
+              min="10"
+              max="1000"
+              value="120"
+              class="slider"
+              id="outer-length-slider"
+            />
+            <div class="slider-value" id="outer-length-value">120</div>
+          </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Trail Length:</div>
+            <input
+              type="range"
+              min="100"
+              max="50000"
+              value="2000"
+              class="slider"
+              id="trail-slider"
+            />
+            <div class="slider-value" id="trail-value">2000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const playPauseBtn = document.getElementById("play-pause");
+      const resetBtn = document.getElementById("reset");
+      const toggleTrailBtn = document.getElementById("toggle-trail");
+      const toggleArmsBtn = document.getElementById("toggle-arms");
+      const toggleControlsBtn = document.getElementById("toggle-controls");
+      const controlsPanel = document.getElementById("controls-panel");
+
+      const speedSlider = document.getElementById("speed-slider");
+      const innerLengthSlider = document.getElementById("inner-length-slider");
+      const outerLengthSlider = document.getElementById("outer-length-slider");
+      const trailSlider = document.getElementById("trail-slider");
+
+      const speedValue = document.getElementById("speed-value");
+      const innerLengthValue = document.getElementById("inner-length-value");
+      const outerLengthValue = document.getElementById("outer-length-value");
+      const trailValue = document.getElementById("trail-value");
+
+      // Constants
+      const PI = Math.PI;
+
+      // App state
+      let animationId;
+      let isPlaying = true;
+      let showTrail = true;
+      let showArms = true;
+      let showControls = false;
+      let theta = 0;
+      let trail = [];
+      let maxTrailLength = parseInt(trailSlider.value);
+
+      // Initialize canvas size
+      function setupCanvas() {
+        const oldWidth = canvas.width || window.innerWidth;
+        const oldHeight = canvas.height || window.innerHeight;
+        const oldCenterX = oldWidth / 2;
+        const oldCenterY = oldHeight / 2;
+
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        const newCenterX = newWidth / 2;
+        const newCenterY = newHeight / 2;
+
+        // Calculate offsets for repositioning trail points
+        const offsetX = newCenterX - oldCenterX;
+        const offsetY = newCenterY - oldCenterY;
+
+        // Update canvas dimensions
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Reposition all trail points relative to new center
+        for (let i = 0; i < trail.length; i++) {
+          trail[i].x += offsetX;
+          trail[i].y += offsetY;
+        }
+      }
+
+      // App parameters
+      let innerArmLength = parseInt(innerLengthSlider.value);
+      let outerArmLength = parseInt(outerLengthSlider.value);
+      let speed = parseInt(speedSlider.value) / 1000;
+
+      // Setup event listeners
+      function setupEventListeners() {
+        playPauseBtn.addEventListener("click", togglePlayPause);
+        resetBtn.addEventListener("click", reset);
+        toggleTrailBtn.addEventListener("click", toggleTrail);
+        toggleArmsBtn.addEventListener("click", toggleArms);
+        toggleControlsBtn.addEventListener("click", toggleControls);
+
+        speedSlider.addEventListener("input", updateSpeed);
+        innerLengthSlider.addEventListener("input", updateInnerLength);
+        outerLengthSlider.addEventListener("input", updateOuterLength);
+        trailSlider.addEventListener("input", updateTrailLength);
+
+        window.addEventListener("resize", setupCanvas);
+      }
+
+      // Event handlers
+      function togglePlayPause() {
+        isPlaying = !isPlaying;
+        playPauseBtn.textContent = isPlaying ? "Pause" : "Play";
+
+        if (isPlaying) {
+          animate();
+        } else {
+          cancelAnimationFrame(animationId);
+        }
+      }
+
+      function reset() {
+        theta = 0;
+        trail = [];
+        if (!isPlaying) {
+          isPlaying = true;
+          playPauseBtn.textContent = "Pause";
+          animate();
+        }
+      }
+
+      function toggleTrail() {
+        showTrail = !showTrail;
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+      }
+
+      function toggleArms() {
+        showArms = !showArms;
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+      }
+
+      function toggleControls() {
+        showControls = !showControls;
+        controlsPanel.classList.toggle("visible", showControls);
+      }
+
+      function updateSpeed() {
+        speedValue.textContent = speedSlider.value;
+        speed = parseInt(speedSlider.value) / 1000;
+      }
+
+      function updateInnerLength() {
+        innerLengthValue.textContent = innerLengthSlider.value;
+        innerArmLength = parseInt(innerLengthSlider.value);
+      }
+
+      function updateOuterLength() {
+        outerLengthValue.textContent = outerLengthSlider.value;
+        outerArmLength = parseInt(outerLengthSlider.value);
+      }
+
+      function updateTrailLength() {
+        trailValue.textContent = trailSlider.value;
+        maxTrailLength = parseInt(trailSlider.value);
+
+        // Trim trail if needed
+        if (trail.length > maxTrailLength) {
+          trail = trail.slice(trail.length - maxTrailLength);
+        }
+      }
+
+      // Drawing functions
+      function drawBackground() {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function drawArms(
+        centerX,
+        centerY,
+        innerEndX,
+        innerEndY,
+        outerEndX,
+        outerEndY,
+      ) {
+        if (!showArms) return;
+
+        // Draw center point
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 3, 0, 2 * PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+
+        // Draw inner arm
+        ctx.beginPath();
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(innerEndX, innerEndY);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw inner arm endpoint
+        ctx.beginPath();
+        ctx.arc(innerEndX, innerEndY, 3, 0, 2 * PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+
+        // Draw outer arm
+        ctx.beginPath();
+        ctx.moveTo(innerEndX, innerEndY);
+        ctx.lineTo(outerEndX, outerEndY);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw outer arm endpoint
+        ctx.beginPath();
+        ctx.arc(outerEndX, outerEndY, 3, 0, 2 * PI);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+      }
+
+      function drawTrail() {
+        if (!showTrail || trail.length < 2) return;
+
+        // Draw the trail
+        ctx.beginPath();
+        ctx.moveTo(trail[0].x, trail[0].y);
+
+        for (let i = 1; i < trail.length; i++) {
+          ctx.lineTo(trail[i].x, trail[i].y);
+        }
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Animation loop
+      function animate() {
+        if (!isPlaying) return;
+
+        animationId = requestAnimationFrame(animate);
+
+        // Clear canvas
+        drawBackground();
+
+        // Calculate positions
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        // Inner arm end position
+        const innerTheta = theta;
+        const innerEndX = centerX + innerArmLength * Math.cos(innerTheta);
+        const innerEndY = centerY + innerArmLength * Math.sin(innerTheta);
+
+        // Outer arm end position - rotates PI times faster
+        const outerTheta = PI * theta;
+        const outerEndX = innerEndX + outerArmLength * Math.cos(outerTheta);
+        const outerEndY = innerEndY + outerArmLength * Math.sin(outerTheta);
+
+        // Add point to trail
+        trail.push({ x: outerEndX, y: outerEndY });
+
+        // Limit trail length
+        if (trail.length > maxTrailLength) {
+          trail.shift();
+        }
+
+        // Draw elements
+        drawTrail();
+        drawArms(centerX, centerY, innerEndX, innerEndY, outerEndX, outerEndY);
+
+        // Increment theta
+        theta += speed;
+      }
+
+      // Initialize the app
+      function init() {
+        setupCanvas();
+        setupEventListeners();
+        animate();
+      }
+
+      // Start the app
+      init();
+    </script>
+  </body>
+</html>
