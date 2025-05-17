@@ -225,7 +225,9 @@
       let showControls = false;
       let theta = 0;
       let trail = [];
+      let trailIndex = 0;
       let maxTrailLength = parseInt(trailSlider.value);
+      let skipFrames = 0; // For sampling points less frequently
 
       // Initialize canvas size
       function setupCanvas() {
@@ -249,8 +251,10 @@
 
         // Reposition all trail points relative to new center
         for (let i = 0; i < trail.length; i++) {
-          trail[i].x += offsetX;
-          trail[i].y += offsetY;
+          if (trail[i]) {
+            trail[i].x += offsetX;
+            trail[i].y += offsetY;
+          }
         }
       }
 
@@ -290,7 +294,9 @@
 
       function reset() {
         theta = 0;
-        trail = [];
+        trail = new Array(maxTrailLength);
+        trailIndex = 0;
+        
         if (!isPlaying) {
           isPlaying = true;
           playPauseBtn.textContent = "Pause";
@@ -368,12 +374,32 @@
 
       function updateTrailLength() {
         trailValue.textContent = trailSlider.value;
-        maxTrailLength = parseInt(trailSlider.value);
-
-        // Trim trail if needed
-        if (trail.length > maxTrailLength) {
-          trail = trail.slice(trail.length - maxTrailLength);
+        const newMaxTrailLength = parseInt(trailSlider.value);
+        
+        // If trail is getting smaller, keep most recent points
+        if (newMaxTrailLength < maxTrailLength && trail.length > 0) {
+          const newTrail = new Array(newMaxTrailLength);
+          for (let i = 0; i < newMaxTrailLength; i++) {
+            const oldIndex = (trailIndex - newMaxTrailLength + i + maxTrailLength) % maxTrailLength;
+            if (trail[oldIndex]) {
+              newTrail[i] = trail[oldIndex];
+            }
+          }
+          trail = newTrail;
+          trailIndex = 0;
+        } else {
+          // If trail is getting larger, create new array and copy points
+          const newTrail = new Array(newMaxTrailLength);
+          for (let i = 0; i < Math.min(maxTrailLength, trail.length); i++) {
+            newTrail[i] = trail[i];
+          }
+          trail = newTrail;
         }
+        
+        maxTrailLength = newMaxTrailLength;
+        
+        // Adjust sampling rate based on trail length
+        skipFrames = Math.floor(maxTrailLength / 5000); // More sampling for longer trails
       }
 
       // Drawing functions
@@ -428,14 +454,36 @@
       }
 
       function drawTrail() {
-        if (!showTrail || trail.length < 2) return;
+        if (!showTrail || trail.length === 0) return;
 
-        // Draw the trail
+        // Find first valid point
+        let startIdx = 0;
+        while (startIdx < trail.length && !trail[startIdx]) {
+          startIdx++;
+        }
+        
+        if (startIdx >= trail.length) return;
+        
+        // Draw the trail more efficiently
         ctx.beginPath();
-        ctx.moveTo(trail[0].x, trail[0].y);
-
-        for (let i = 1; i < trail.length; i++) {
-          ctx.lineTo(trail[i].x, trail[i].y);
+        ctx.moveTo(trail[startIdx].x, trail[startIdx].y);
+        
+        let lastX = trail[startIdx].x;
+        let lastY = trail[startIdx].y;
+        
+        for (let i = startIdx + 1; i < trail.length; i++) {
+          if (trail[i]) {
+            // Skip tiny movements (less than 1px)
+            const dx = trail[i].x - lastX;
+            const dy = trail[i].y - lastY;
+            const distSquared = dx * dx + dy * dy;
+            
+            if (distSquared > 1) {
+              ctx.lineTo(trail[i].x, trail[i].y);
+              lastX = trail[i].x;
+              lastY = trail[i].y;
+            }
+          }
         }
 
         ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
@@ -466,12 +514,11 @@
         const outerEndX = innerEndX + outerArmLength * Math.cos(outerTheta);
         const outerEndY = innerEndY + outerArmLength * Math.sin(outerTheta);
 
-        // Add point to trail
-        trail.push({ x: outerEndX, y: outerEndY });
-
-        // Limit trail length
-        if (trail.length > maxTrailLength) {
-          trail.shift();
+        // Add point to trail (using circular buffer)
+        // Only add every few frames depending on trail length
+        if (skipFrames === 0 || theta % (skipFrames + 1) < 0.0001) {
+          trail[trailIndex] = { x: outerEndX, y: outerEndY };
+          trailIndex = (trailIndex + 1) % maxTrailLength;
         }
 
         // Draw elements
@@ -485,6 +532,7 @@
       // Initialize the app
       function init() {
         setupCanvas();
+        trail = new Array(maxTrailLength); // Preallocate array
         setupEventListeners();
         animate();
       }
