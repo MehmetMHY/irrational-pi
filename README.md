@@ -1,20 +1,43 @@
-<p align="center">
-    <img width="250" src="./assets/images/logo.png">
-</p>
+<div align="center">
+  <img width="250" src="./assets/images/logo.png">
+</div>
 
-<h1 align="center">Irrational Pi - Algorithm Art</h1>
+<h1 align="center">Irrational Pi: Algorithm Art</h1>
 
-## Credit
+## Project Overview
 
-This project was inspired by **@fascinating.fractals** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) on drawing the irrational Pi. So massive credit to this amazing creator!
+This project visualizes the irrational nature of Pi by using a double-arm algorithmic system. The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality.
+
+## Inspiration
+
+Credit for the core idea goes to **@fascinating.fractals** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) about drawing the irrational Pi. Without his creative content, this visualization would not exist. Please consider supporting his content.
 
 ## Preview
 
-<p align="center">
-    <img src="./assets/images/pi_visualization_1747473685628.png">
-</p>
+<div align="center">
+  <img src="./assets/images/pi_visualization_1747473685628.png">
+</div>
 
-## Built With
+## Features
+
+- Interactive parameter controls via a customizable panel
+- Options to pause, reset, randomize, clear, or save both settings and imagery
+- Pixel preservation mode for high-density trail art
+- Load and save your favorite settings as JSON
+- Download canvas art with one click
+- Each session gives you a different way to visually experience Pi
+
+## How to Use
+
+1. Open `index.html` directly in your browser.
+2. Use the ⚙️ icon to toggle the controls panel.
+3. Adjust sliders or numeric inputs for speed, arm lengths, trail length, arm skip, or line width.
+4. Use buttons to pause or play, reset, randomize, clear, or save current visualization or settings.
+5. Flip Pixel Mode on or off for alternative rendering.
+6. Save your settings as JSON, or load previously saved settings.
+7. Download your art when you find a pattern you enjoy.
+
+## Technologies & Methods Used
 
 ### Tools
 
@@ -47,3 +70,7 @@ This project was inspired by **@fascinating.fractals** and his [video](https://w
 4. After transferring it, I opened the local project with the **Cursor IDE**, were I have a Pro plan, and I utilized **Claude 3.7 Sonnet** and **Google Gemini 2.5 Pro** to finish implementing the project itself. I did use the **ChatGPT** and **Gemini** web apps to generate ideas and feed it into the **Cursor IDE** to fix more complex bugs. In **ChatGPT** I utilized OpenAI's **o3** model and in **Gemini** I used their **Google Gemini 2.5 Pro** model.
 
 5. I tested the project in my browser by just opening the single index HTML file in my browser.
+
+## License
+
+This project is for personal and educational use only. Major creative credit goes to @fascinating.fractals for the algorithmic inspiration. See his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) for a detailed explanation and origin.
