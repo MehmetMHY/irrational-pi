@@ -213,6 +213,7 @@
           <button id="reset">Reset Sim</button>
           <button id="toggle-trail">Hide Trail</button>
           <button id="toggle-arms">Hide Arms</button>
+          <button id="toggle-pause-arms">Hide Arms When Paused</button>
           <button id="reset-defaults">Reset Defaults</button>
           <button id="randomize-settings">Randomize</button>
           <button id="download-settings">Save Settings</button>
@@ -368,6 +369,7 @@
       const resetBtn = document.getElementById("reset");
       const toggleTrailBtn = document.getElementById("toggle-trail");
       const toggleArmsBtn = document.getElementById("toggle-arms");
+      const togglePauseArmsBtn = document.getElementById("toggle-pause-arms");
       const toggleControlsBtn = document.getElementById("toggle-controls");
       const controlsPanel = document.getElementById("controls-panel");
       const downloadSettingsBtn = document.getElementById("download-settings");
@@ -410,6 +412,7 @@
         trailLength: 2000,
         showTrail: true,
         showArms: true,
+        hideArmsWhenPaused: false,
         armDrawSkipFrames: 0,
         lineWidth: 1.5,
       };
@@ -419,6 +422,7 @@
       let isPlaying = true;
       let showTrail = DEFAULT_SETTINGS.showTrail;
       let showArms = DEFAULT_SETTINGS.showArms;
+      let hideArmsWhenPaused = DEFAULT_SETTINGS.hideArmsWhenPaused;
       let showControls = false;
       let pixelMode = false;
       let theta = 0;
@@ -516,6 +520,7 @@
         resetBtn.addEventListener("click", resetAnimation);
         toggleTrailBtn.addEventListener("click", toggleTrail);
         toggleArmsBtn.addEventListener("click", toggleArms);
+        togglePauseArmsBtn.addEventListener("click", togglePauseArms);
         toggleControlsBtn.addEventListener("click", toggleControls);
         downloadSettingsBtn.addEventListener("click", downloadSettings);
         loadSettingsBtn.addEventListener("click", () =>
@@ -653,8 +658,18 @@
       function togglePlayPause() {
         isPlaying = !isPlaying;
         playPauseBtn.textContent = isPlaying ? "Pause" : "Play";
-        if (isPlaying) animate();
-        else cancelAnimationFrame(animationId);
+
+        if (isPlaying) {
+          animate();
+        } else {
+          cancelAnimationFrame(animationId);
+
+          // If hideArmsWhenPaused is true, redraw the scene without arms
+          if (hideArmsWhenPaused && showArms) {
+            drawBackground();
+            drawTrailOptimized();
+          }
+        }
       }
 
       function resetAnimation() {
@@ -700,6 +715,65 @@
       function toggleArms() {
         showArms = !showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        // If paused and arms were just enabled or disabled, refresh the display
+        if (!isPlaying) {
+          drawBackground();
+          drawTrailOptimized();
+
+          // Only draw arms if showArms is true and we're not hiding arms when paused
+          if (showArms && !hideArmsWhenPaused) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const innerEndX = centerX + innerArmLength * Math.cos(theta);
+            const innerEndY = centerY + innerArmLength * Math.sin(theta);
+            const outerEndX =
+              innerEndX + outerArmLength * Math.cos(Math.PI * theta);
+            const outerEndY =
+              innerEndY + outerArmLength * Math.sin(Math.PI * theta);
+            drawArms(
+              centerX,
+              centerY,
+              innerEndX,
+              innerEndY,
+              outerEndX,
+              outerEndY,
+            );
+          }
+        }
+      }
+
+      function togglePauseArms() {
+        hideArmsWhenPaused = !hideArmsWhenPaused;
+        togglePauseArmsBtn.textContent = hideArmsWhenPaused
+          ? "Show Arms When Paused"
+          : "Hide Arms When Paused";
+
+        // If currently paused, update the display to reflect the new setting
+        if (!isPlaying) {
+          drawBackground();
+          drawTrailOptimized();
+
+          // Draw arms only if they should be visible
+          if (showArms && !hideArmsWhenPaused) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const innerEndX = centerX + innerArmLength * Math.cos(theta);
+            const innerEndY = centerY + innerArmLength * Math.sin(theta);
+            const outerEndX =
+              innerEndX + outerArmLength * Math.cos(Math.PI * theta);
+            const outerEndY =
+              innerEndY + outerArmLength * Math.sin(Math.PI * theta);
+            drawArms(
+              centerX,
+              centerY,
+              innerEndX,
+              innerEndY,
+              outerEndX,
+              outerEndY,
+            );
+          }
+        }
       }
 
       function toggleControls() {
@@ -738,6 +812,7 @@
           lineWidth: parseFloat(lineWidthSlider.value),
           showTrail: showTrail,
           showArms: showArms,
+          hideArmsWhenPaused: hideArmsWhenPaused,
           pixelMode: pixelMode,
         };
 
@@ -778,10 +853,14 @@
 
         showTrail = DEFAULT_SETTINGS.showTrail;
         showArms = DEFAULT_SETTINGS.showArms;
+        hideArmsWhenPaused = DEFAULT_SETTINGS.hideArmsWhenPaused;
         pixelMode = false;
 
         toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+        togglePauseArmsBtn.textContent = hideArmsWhenPaused
+          ? "Show Arms When Paused"
+          : "Hide Arms When Paused";
         togglePixelModeBtn.textContent = "Pixel Mode: Off";
 
         updateSpeed();
@@ -867,7 +946,7 @@
             innerEndYVal + outerArmLength * Math.sin(outerArmAngleVal);
 
           drawTrailOptimized();
-          if (showArms) {
+          if (showArms && (!hideArmsWhenPaused || isPlaying)) {
             drawArms(
               centerX,
               centerY,
@@ -1128,6 +1207,10 @@
         toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
         showArms = DEFAULT_SETTINGS.showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+        hideArmsWhenPaused = DEFAULT_SETTINGS.hideArmsWhenPaused;
+        togglePauseArmsBtn.textContent = hideArmsWhenPaused
+          ? "Show Arms When Paused"
+          : "Hide Arms When Paused";
 
         updateSpeed();
         updateInnerLength();
@@ -1201,6 +1284,13 @@
             if (settings.showArms !== undefined) {
               showArms = settings.showArms;
               toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+            }
+
+            if (settings.hideArmsWhenPaused !== undefined) {
+              hideArmsWhenPaused = settings.hideArmsWhenPaused;
+              togglePauseArmsBtn.textContent = hideArmsWhenPaused
+                ? "Show Arms When Paused"
+                : "Hide Arms When Paused";
             }
 
             if (settings.pixelMode !== undefined) {
