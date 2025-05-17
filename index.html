@@ -1,7 +1,9 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Pi Visualization - So Close Yet So Far</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pi Visualization - Enhanced</title>
     <style>
       body {
         margin: 0;
@@ -11,10 +13,10 @@
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        font-family: Arial, sans-serif;
+        font-family: "Inter", Arial, sans-serif; /* Using Inter font */
         background-color: #000;
         color: #fff;
-        overflow: hidden;
+        overflow: hidden; /* Prevents scrollbars if canvas slightly overflows */
       }
 
       .container {
@@ -33,21 +35,24 @@
         width: 100%;
         height: 100%;
         z-index: 1;
+        display: block; /* Fix potential extra space below canvas */
       }
 
       .controls-panel {
         position: fixed;
         bottom: 0;
         right: 0;
-        width: 300px;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-top-left-radius: 10px;
-        padding: 15px;
-        z-index: 2;
+        width: 320px; /* Slightly wider for new buttons */
+        background-color: rgba(20, 20, 20, 0.85);
+        backdrop-filter: blur(5px);
+        border-top-left-radius: 12px;
+        padding: 20px;
+        z-index: 10;
         transition: transform 0.3s ease-in-out;
         transform: translateY(100%);
-        max-height: 100vh;
+        max-height: calc(100vh - 40px);
         overflow-y: auto;
+        box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.2);
       }
 
       .controls-panel.visible {
@@ -55,26 +60,34 @@
       }
 
       .controls {
-        display: flex;
-        width: 100%;
-        justify-content: space-around;
+        display: grid; /* Use grid for better button layout */
+        grid-template-columns: 1fr 1fr; /* Two columns */
+        gap: 10px; /* Gap between buttons */
         margin-bottom: 20px;
-        flex-wrap: wrap;
       }
 
       .controls button {
-        margin: 5px;
-        padding: 8px 12px;
+        padding: 10px 5px; /* Adjust padding for smaller buttons if needed */
         background-color: #333;
         color: white;
         border: 1px solid #555;
-        border-radius: 4px;
+        border-radius: 6px;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition:
+          background-color 0.2s,
+          transform 0.1s;
+        font-size: 13px; /* Slightly smaller font for more buttons */
+        min-width: 0; /* Allow buttons to shrink if text is short */
+      }
+      .controls button.full-width {
+        grid-column: span 2; /* Make a button span both columns */
       }
 
       .controls button:hover {
         background-color: #444;
+      }
+      .controls button:active {
+        transform: scale(0.95);
       }
 
       .slider-container {
@@ -85,23 +98,51 @@
       .slider-row {
         display: flex;
         align-items: center;
-        margin: 10px 0;
+        margin: 15px 0;
       }
 
       .slider-label {
-        width: 180px;
+        width: 150px; /* Adjusted width for potentially longer labels */
         margin-right: 10px;
         font-size: 14px;
+        white-space: nowrap;
       }
 
       .slider {
         flex-grow: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 8px;
+        background: #555;
+        border-radius: 4px;
+        outline: none;
+      }
+      .slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        background: #007aff;
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: #007aff;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
       }
 
       .slider-value {
-        width: 50px;
+        width: 45px; /* Adjusted width */
         margin-left: 10px;
         text-align: right;
+        font-size: 14px;
+        background-color: #222;
+        padding: 3px 6px;
+        border-radius: 4px;
       }
 
       .toggle-controls {
@@ -110,15 +151,20 @@
         right: 20px;
         width: 50px;
         height: 50px;
-        background-color: rgba(0, 0, 0, 0.7);
+        background-color: rgba(30, 30, 30, 0.8);
+        backdrop-filter: blur(5px);
         border: 1px solid #555;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        z-index: 3;
+        z-index: 11;
         font-size: 24px;
+        transition: background-color 0.2s;
+      }
+      .toggle-controls:hover {
+        background-color: rgba(50, 50, 50, 0.9);
       }
     </style>
   </head>
@@ -131,10 +177,18 @@
       <div class="controls-panel" id="controls-panel">
         <div class="controls">
           <button id="play-pause">Pause</button>
-          <button id="reset">Reset</button>
+          <button id="reset">Reset Sim</button>
           <button id="toggle-trail">Hide Trail</button>
           <button id="toggle-arms">Hide Arms</button>
-          <button id="download-settings">Download Settings</button>
+          <button id="reset-defaults" class="full-width">
+            Reset to Defaults
+          </button>
+          <button id="randomize-settings" class="full-width">
+            Randomize Settings
+          </button>
+          <button id="download-settings" class="full-width">
+            Download Settings
+          </button>
         </div>
 
         <div class="slider-container">
@@ -152,11 +206,11 @@
           </div>
 
           <div class="slider-row">
-            <div class="slider-label">Inner Arm Length:</div>
+            <div class="slider-label">Inner Arm (L1):</div>
             <input
               type="range"
               min="10"
-              max="1000"
+              max="500"
               value="120"
               class="slider"
               id="inner-length-slider"
@@ -165,11 +219,11 @@
           </div>
 
           <div class="slider-row">
-            <div class="slider-label">Outer Arm Length:</div>
+            <div class="slider-label">Outer Arm (L2):</div>
             <input
               type="range"
               min="10"
-              max="1000"
+              max="500"
               value="120"
               class="slider"
               id="outer-length-slider"
@@ -189,6 +243,19 @@
             />
             <div class="slider-value" id="trail-value">2000</div>
           </div>
+
+          <div class="slider-row">
+            <div class="slider-label">Arm Draw Skip Frames:</div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value="0"
+              class="slider"
+              id="arm-draw-skip-slider"
+            />
+            <div class="slider-value" id="arm-draw-skip-value">0</div>
+          </div>
         </div>
       </div>
     </div>
@@ -203,104 +270,211 @@
       const toggleControlsBtn = document.getElementById("toggle-controls");
       const controlsPanel = document.getElementById("controls-panel");
       const downloadSettingsBtn = document.getElementById("download-settings");
+      const resetDefaultsBtn = document.getElementById("reset-defaults"); // New button
+      const randomizeSettingsBtn =
+        document.getElementById("randomize-settings"); // New button
 
       const speedSlider = document.getElementById("speed-slider");
       const innerLengthSlider = document.getElementById("inner-length-slider");
       const outerLengthSlider = document.getElementById("outer-length-slider");
       const trailSlider = document.getElementById("trail-slider");
+      const armDrawSkipSlider = document.getElementById("arm-draw-skip-slider"); // New slider
 
       const speedValue = document.getElementById("speed-value");
       const innerLengthValue = document.getElementById("inner-length-value");
       const outerLengthValue = document.getElementById("outer-length-value");
       const trailValue = document.getElementById("trail-value");
+      const armDrawSkipValue = document.getElementById("arm-draw-skip-value"); // New slider value display
 
-      // Constants
-      const PI = Math.PI;
+      // --- DEFAULT SETTINGS ---
+      const DEFAULT_SETTINGS = {
+        speed: 50,
+        innerArmLength: 120,
+        outerArmLength: 120,
+        trailLength: 2000,
+        showTrail: true,
+        showArms: true,
+        armDrawSkipFrames: 0,
+      };
 
       // App state
       let animationId;
       let isPlaying = true;
-      let showTrail = true;
-      let showArms = true;
+      let showTrail = DEFAULT_SETTINGS.showTrail;
+      let showArms = DEFAULT_SETTINGS.showArms;
       let showControls = false;
       let theta = 0;
       let trail = [];
       let trailIndex = 0;
-      let maxTrailLength = parseInt(trailSlider.value);
-      let skipFrames = 0; // For sampling points less frequently
+      let maxTrailLength = DEFAULT_SETTINGS.trailLength;
+
+      let animationFrameCounter = 0;
+      let trailSkipFrames = 0; // Renamed from skipFrames for clarity
+      let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames; // For arm drawing frequency
 
       // Initialize canvas size
       function setupCanvas() {
-        const oldWidth = canvas.width || window.innerWidth;
-        const oldHeight = canvas.height || window.innerHeight;
+        const oldWidth = canvas.width;
+        const oldHeight = canvas.height;
         const oldCenterX = oldWidth / 2;
         const oldCenterY = oldHeight / 2;
 
-        const newWidth = window.innerWidth;
-        const newHeight = window.innerHeight;
-        const newCenterX = newWidth / 2;
-        const newCenterY = newHeight / 2;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        // Calculate offsets for repositioning trail points
+        const newCenterX = canvas.width / 2;
+        const newCenterY = canvas.height / 2;
         const offsetX = newCenterX - oldCenterX;
         const offsetY = newCenterY - oldCenterY;
 
-        // Update canvas dimensions
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-
-        // Reposition all trail points relative to new center
-        for (let i = 0; i < trail.length; i++) {
-          if (trail[i]) {
-            trail[i].x += offsetX;
-            trail[i].y += offsetY;
+        if (trail.length > 0 && (offsetX !== 0 || offsetY !== 0)) {
+          for (let i = 0; i < trail.length; i++) {
+            if (trail[i]) {
+              trail[i].x += offsetX;
+              trail[i].y += offsetY;
+            }
           }
         }
       }
 
-      // App parameters
-      let innerArmLength = parseInt(innerLengthSlider.value);
-      let outerArmLength = parseInt(outerLengthSlider.value);
-      let speed = parseInt(speedSlider.value) / 1000;
+      // App parameters (will be set from sliders or defaults)
+      let innerArmLength, outerArmLength, speed;
+
+      function debounce(func, delay) {
+        let timeout;
+        return function (...args) {
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(this, args), delay);
+        };
+      }
 
       // Setup event listeners
       function setupEventListeners() {
         playPauseBtn.addEventListener("click", togglePlayPause);
-        resetBtn.addEventListener("click", reset);
+        resetBtn.addEventListener("click", resetAnimation);
         toggleTrailBtn.addEventListener("click", toggleTrail);
         toggleArmsBtn.addEventListener("click", toggleArms);
         toggleControlsBtn.addEventListener("click", toggleControls);
         downloadSettingsBtn.addEventListener("click", downloadSettings);
+        resetDefaultsBtn.addEventListener("click", resetToDefaultSettings); // New listener
+        randomizeSettingsBtn.addEventListener("click", setRandomSettings); // New listener
 
         speedSlider.addEventListener("input", updateSpeed);
         innerLengthSlider.addEventListener("input", updateInnerLength);
         outerLengthSlider.addEventListener("input", updateOuterLength);
         trailSlider.addEventListener("input", updateTrailLength);
+        armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames); // New listener
 
-        window.addEventListener("resize", setupCanvas);
+        window.addEventListener("resize", debounce(setupCanvas, 150));
       }
 
-      // Event handlers
+      // --- Settings Update Functions ---
+      function updateSpeed() {
+        const val = parseInt(speedSlider.value, 10);
+        speedValue.textContent = val;
+        speed = val / 1000;
+      }
+
+      function updateInnerLength() {
+        const val = parseInt(innerLengthSlider.value, 10);
+        innerLengthValue.textContent = val;
+        innerArmLength = val;
+      }
+
+      function updateOuterLength() {
+        const val = parseInt(outerLengthSlider.value, 10);
+        outerLengthValue.textContent = val;
+        outerArmLength = val;
+      }
+
+      function updateTrailLength() {
+        trailValue.textContent = trailSlider.value;
+        const newMaxTrailLength = parseInt(trailSlider.value, 10);
+
+        if (newMaxTrailLength !== maxTrailLength) {
+          const oldMaxTrailLength = maxTrailLength;
+          const oldTrail = trail;
+          const oldTrailIndex = trailIndex;
+
+          trail = new Array(newMaxTrailLength);
+          maxTrailLength = newMaxTrailLength;
+          trailIndex = 0;
+
+          if (oldTrail.length > 0) {
+            const numPointsToCopy = Math.min(
+              newMaxTrailLength,
+              oldMaxTrailLength,
+            );
+            for (let i = 0; i < numPointsToCopy; i++) {
+              const pointIndexInOldBuffer =
+                (oldTrailIndex - 1 - i + oldMaxTrailLength) % oldMaxTrailLength;
+              if (oldTrail[pointIndexInOldBuffer]) {
+                trail[numPointsToCopy - 1 - i] =
+                  oldTrail[pointIndexInOldBuffer];
+              }
+            }
+            trailIndex = numPointsToCopy % newMaxTrailLength;
+            if (numPointsToCopy === 0 && oldTrail.some((p) => p)) {
+              trailIndex = 0;
+            } else if (
+              newMaxTrailLength > 0 &&
+              numPointsToCopy === newMaxTrailLength
+            ) {
+              trailIndex = 0;
+            }
+          }
+        }
+        trailSkipFrames = Math.max(0, Math.floor(maxTrailLength / 7500) - 1);
+      }
+
+      function updateArmDrawSkipFrames() {
+        const val = parseInt(armDrawSkipSlider.value, 10);
+        armDrawSkipValue.textContent = val;
+        armDrawSkipFrames = val;
+      }
+
+      // --- Control Button Handlers ---
       function togglePlayPause() {
         isPlaying = !isPlaying;
         playPauseBtn.textContent = isPlaying ? "Pause" : "Play";
-
-        if (isPlaying) {
-          animate();
-        } else {
-          cancelAnimationFrame(animationId);
-        }
+        if (isPlaying) animate();
+        else cancelAnimationFrame(animationId);
       }
 
-      function reset() {
+      function resetAnimation() {
         theta = 0;
         trail = new Array(maxTrailLength);
         trailIndex = 0;
-        
-        if (!isPlaying) {
-          isPlaying = true;
-          playPauseBtn.textContent = "Pause";
+        animationFrameCounter = 0;
+
+        drawBackground();
+        if (showArms) {
+          const centerX = canvas.width / 2;
+          const centerY = canvas.height / 2;
+          // For reset, always draw arms once if they are supposed to be shown, regardless of skipFrames
+          // The animation loop will then handle the skipping.
+          const initialInnerEndX = centerX + innerArmLength * Math.cos(0);
+          const initialInnerEndY = centerY + innerArmLength * Math.sin(0);
+          const initialOuterEndX =
+            initialInnerEndX + outerArmLength * Math.cos(0);
+          const initialOuterEndY =
+            initialInnerEndY + outerArmLength * Math.sin(0);
+          drawArms(
+            centerX,
+            centerY,
+            initialInnerEndX,
+            initialInnerEndY,
+            initialOuterEndX,
+            initialOuterEndY,
+          );
+        }
+
+        if (isPlaying) {
+          cancelAnimationFrame(animationId);
           animate();
+        } else {
+          // If paused, we still want to redraw the current state after reset.
+          // No need to call animate() if paused. The static drawing is done.
         }
       }
 
@@ -312,6 +486,8 @@
       function toggleArms() {
         showArms = !showArms;
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+        // If arms are hidden, the skip frames don't matter. If shown, they do.
+        // No direct change to armDrawSkipFrames here.
       }
 
       function toggleControls() {
@@ -322,15 +498,14 @@
       function downloadSettings() {
         const settings = {
           timestamp: Date.now(),
-          speed: parseInt(speedSlider.value),
-          innerArmLength: parseInt(innerLengthSlider.value),
-          outerArmLength: parseInt(outerLengthSlider.value),
-          trailLength: parseInt(trailSlider.value),
+          speed: parseInt(speedSlider.value, 10),
+          innerArmLength: parseInt(innerLengthSlider.value, 10),
+          outerArmLength: parseInt(outerLengthSlider.value, 10),
+          trailLength: parseInt(trailSlider.value, 10),
+          armDrawSkipFrames: parseInt(armDrawSkipSlider.value, 10), // Include new setting
           showTrail: showTrail,
           showArms: showArms,
         };
-
-        // Generate UUID
         const uuid = crypto.randomUUID
           ? crypto.randomUUID()
           : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
@@ -339,72 +514,111 @@
                 (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
               ).toString(16),
             );
-
         const settingsJSON = JSON.stringify(settings, null, 2);
         const blob = new Blob([settingsJSON], { type: "application/json" });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement("a");
         a.href = url;
-        a.download = `pvs_${uuid}.json`;
+        a.download = `pi_viz_settings_${uuid}.json`;
         document.body.appendChild(a);
         a.click();
-
-        // Clean up
         setTimeout(() => {
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
         }, 100);
       }
 
-      function updateSpeed() {
-        speedValue.textContent = speedSlider.value;
-        speed = parseInt(speedSlider.value) / 1000;
+      function resetToDefaultSettings() {
+        // Set sliders to default values
+        speedSlider.value = DEFAULT_SETTINGS.speed;
+        innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
+        outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
+        trailSlider.value = DEFAULT_SETTINGS.trailLength;
+        armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+
+        // Update state variables from defaults
+        showTrail = DEFAULT_SETTINGS.showTrail;
+        showArms = DEFAULT_SETTINGS.showArms;
+
+        // Update UI elements (button texts, slider value displays)
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        // Call update functions to apply changes and update dependent variables
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength(); // This also updates trailSkipFrames
+        updateArmDrawSkipFrames();
+
+        resetAnimation(); // Reset the simulation visuals
       }
 
-      function updateInnerLength() {
-        innerLengthValue.textContent = innerLengthSlider.value;
-        innerArmLength = parseInt(innerLengthSlider.value);
+      function setRandomSettings() {
+        // Randomize Speed
+        speedSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(speedSlider.max, 10) -
+                parseInt(speedSlider.min, 10) +
+                1),
+          ) + parseInt(speedSlider.min, 10);
+
+        // Randomize Inner Arm Length
+        innerLengthSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(innerLengthSlider.max, 10) -
+                parseInt(innerLengthSlider.min, 10) +
+                1),
+          ) + parseInt(innerLengthSlider.min, 10);
+
+        // Randomize Outer Arm Length
+        outerLengthSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(outerLengthSlider.max, 10) -
+                parseInt(outerLengthSlider.min, 10) +
+                1),
+          ) + parseInt(outerLengthSlider.min, 10);
+
+        // Randomize Trail Length
+        trailSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(trailSlider.max, 10) -
+                parseInt(trailSlider.min, 10) +
+                1),
+          ) + parseInt(trailSlider.min, 10);
+
+        // Randomize Arm Draw Skip Frames
+        armDrawSkipSlider.value =
+          Math.floor(
+            Math.random() *
+              (parseInt(armDrawSkipSlider.max, 10) -
+                parseInt(armDrawSkipSlider.min, 10) +
+                1),
+          ) + parseInt(armDrawSkipSlider.min, 10);
+
+        // Optionally, randomize toggles
+        // showTrail = Math.random() < 0.75; // 75% chance to show trail
+        // showArms = Math.random() < 0.85;  // 85% chance to show arms
+        // toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+        // toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        // Call update functions to apply changes
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength();
+        updateArmDrawSkipFrames();
+
+        resetAnimation(); // Reset the simulation visuals
       }
 
-      function updateOuterLength() {
-        outerLengthValue.textContent = outerLengthSlider.value;
-        outerArmLength = parseInt(outerLengthSlider.value);
-      }
-
-      function updateTrailLength() {
-        trailValue.textContent = trailSlider.value;
-        const newMaxTrailLength = parseInt(trailSlider.value);
-        
-        // If trail is getting smaller, keep most recent points
-        if (newMaxTrailLength < maxTrailLength && trail.length > 0) {
-          const newTrail = new Array(newMaxTrailLength);
-          for (let i = 0; i < newMaxTrailLength; i++) {
-            const oldIndex = (trailIndex - newMaxTrailLength + i + maxTrailLength) % maxTrailLength;
-            if (trail[oldIndex]) {
-              newTrail[i] = trail[oldIndex];
-            }
-          }
-          trail = newTrail;
-          trailIndex = 0;
-        } else {
-          // If trail is getting larger, create new array and copy points
-          const newTrail = new Array(newMaxTrailLength);
-          for (let i = 0; i < Math.min(maxTrailLength, trail.length); i++) {
-            newTrail[i] = trail[i];
-          }
-          trail = newTrail;
-        }
-        
-        maxTrailLength = newMaxTrailLength;
-        
-        // Adjust sampling rate based on trail length
-        skipFrames = Math.floor(maxTrailLength / 5000); // More sampling for longer trails
-      }
-
-      // Drawing functions
+      // --- Drawing Functions ---
       function drawBackground() {
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
@@ -416,123 +630,149 @@
         outerEndX,
         outerEndY,
       ) {
-        if (!showArms) return;
-
-        // Draw center point
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, 3, 0, 2 * PI);
+        // This function is now only called if showArms is true AND skip frame condition is met.
+        // No need for an additional 'if (!showArms) return;' here.
+        ctx.strokeStyle = "rgba(220, 220, 220, 0.7)";
         ctx.fillStyle = "#fff";
+        ctx.lineWidth = 1.5;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
         ctx.fill();
 
-        // Draw inner arm
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.lineTo(innerEndX, innerEndY);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Draw inner arm endpoint
         ctx.beginPath();
-        ctx.arc(innerEndX, innerEndY, 3, 0, 2 * PI);
-        ctx.fillStyle = "#fff";
+        ctx.arc(innerEndX, innerEndY, 4, 0, 2 * Math.PI);
         ctx.fill();
 
-        // Draw outer arm
         ctx.beginPath();
         ctx.moveTo(innerEndX, innerEndY);
         ctx.lineTo(outerEndX, outerEndY);
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.lineWidth = 1;
         ctx.stroke();
 
-        // Draw outer arm endpoint
         ctx.beginPath();
-        ctx.arc(outerEndX, outerEndY, 3, 0, 2 * PI);
-        ctx.fillStyle = "#fff";
+        ctx.arc(outerEndX, outerEndY, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = "#00A0FF";
         ctx.fill();
       }
 
-      function drawTrail() {
+      function drawTrailOptimized() {
         if (!showTrail || trail.length === 0) return;
 
-        // Find first valid point
-        let startIdx = 0;
-        while (startIdx < trail.length && !trail[startIdx]) {
-          startIdx++;
-        }
-        
-        if (startIdx >= trail.length) return;
-        
-        // Draw the trail more efficiently
-        ctx.beginPath();
-        ctx.moveTo(trail[startIdx].x, trail[startIdx].y);
-        
-        let lastX = trail[startIdx].x;
-        let lastY = trail[startIdx].y;
-        
-        for (let i = startIdx + 1; i < trail.length; i++) {
-          if (trail[i]) {
-            // Skip tiny movements (less than 1px)
-            const dx = trail[i].x - lastX;
-            const dy = trail[i].y - lastY;
-            const distSquared = dx * dx + dy * dy;
-            
-            if (distSquared > 1) {
-              ctx.lineTo(trail[i].x, trail[i].y);
-              lastX = trail[i].x;
-              lastY = trail[i].y;
-            }
+        let firstValidPointIndex = -1;
+        for (let i = 0; i < maxTrailLength; i++) {
+          const currentBufferIndex = (trailIndex + i) % maxTrailLength;
+          if (trail[currentBufferIndex]) {
+            firstValidPointIndex = currentBufferIndex;
+            break;
           }
         }
 
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        if (firstValidPointIndex === -1) return;
+
+        ctx.beginPath();
+        ctx.moveTo(
+          trail[firstValidPointIndex].x,
+          trail[firstValidPointIndex].y,
+        );
+
+        let lastX = trail[firstValidPointIndex].x;
+        let lastY = trail[firstValidPointIndex].y;
+
+        for (let i = 1; i < maxTrailLength; i++) {
+          const currentPointBufferIndex =
+            (firstValidPointIndex + i) % maxTrailLength;
+          const currentPoint = trail[currentPointBufferIndex];
+
+          if (currentPoint) {
+            const dx = currentPoint.x - lastX;
+            const dy = currentPoint.y - lastY;
+            if (dx * dx + dy * dy > 1) {
+              ctx.lineTo(currentPoint.x, currentPoint.y);
+              lastX = currentPoint.x;
+              lastY = currentPoint.y;
+            }
+          } else {
+            break;
+          }
+        }
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
         ctx.lineWidth = 1.5;
         ctx.stroke();
       }
 
-      // Animation loop
+      // --- Animation Loop ---
       function animate() {
         if (!isPlaying) return;
 
         animationId = requestAnimationFrame(animate);
-
-        // Clear canvas
         drawBackground();
 
-        // Calculate positions
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-
-        // Inner arm end position
         const innerTheta = theta;
         const innerEndX = centerX + innerArmLength * Math.cos(innerTheta);
         const innerEndY = centerY + innerArmLength * Math.sin(innerTheta);
+        const outerArmAngle = Math.PI * theta;
+        const outerEndX = innerEndX + outerArmLength * Math.cos(outerArmAngle);
+        const outerEndY = innerEndY + outerArmLength * Math.sin(outerArmAngle);
 
-        // Outer arm end position - rotates PI times faster
-        const outerTheta = PI * theta;
-        const outerEndX = innerEndX + outerArmLength * Math.cos(outerTheta);
-        const outerEndY = innerEndY + outerArmLength * Math.sin(outerTheta);
-
-        // Add point to trail (using circular buffer)
-        // Only add every few frames depending on trail length
-        if (skipFrames === 0 || theta % (skipFrames + 1) < 0.0001) {
+        // Add point to trail (respecting trailSkipFrames)
+        if (
+          animationFrameCounter % (trailSkipFrames + 1) === 0 &&
+          maxTrailLength > 0
+        ) {
           trail[trailIndex] = { x: outerEndX, y: outerEndY };
           trailIndex = (trailIndex + 1) % maxTrailLength;
         }
 
-        // Draw elements
-        drawTrail();
-        drawArms(centerX, centerY, innerEndX, innerEndY, outerEndX, outerEndY);
+        drawTrailOptimized();
 
-        // Increment theta
+        // Draw arms (respecting showArms and armDrawSkipFrames)
+        if (showArms && animationFrameCounter % (armDrawSkipFrames + 1) === 0) {
+          drawArms(
+            centerX,
+            centerY,
+            innerEndX,
+            innerEndY,
+            outerEndX,
+            outerEndY,
+          );
+        }
+
+        animationFrameCounter++;
         theta += speed;
       }
 
-      // Initialize the app
+      // --- Initialize the App ---
       function init() {
+        // Set initial slider values from defaults
+        speedSlider.value = DEFAULT_SETTINGS.speed;
+        innerLengthSlider.value = DEFAULT_SETTINGS.innerArmLength;
+        outerLengthSlider.value = DEFAULT_SETTINGS.outerArmLength;
+        trailSlider.value = DEFAULT_SETTINGS.trailLength;
+        armDrawSkipSlider.value = DEFAULT_SETTINGS.armDrawSkipFrames;
+
+        // Set initial state from defaults
+        showTrail = DEFAULT_SETTINGS.showTrail;
+        toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
+        showArms = DEFAULT_SETTINGS.showArms;
+        toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+
+        // Call update functions to initialize state variables from sliders
+        updateSpeed();
+        updateInnerLength();
+        updateOuterLength();
+        updateTrailLength(); // This also initializes trailSkipFrames
+        updateArmDrawSkipFrames(); // This initializes armDrawSkipFrames variable
+
         setupCanvas();
-        trail = new Array(maxTrailLength); // Preallocate array
+        trail = new Array(maxTrailLength);
         setupEventListeners();
         animate();
       }
