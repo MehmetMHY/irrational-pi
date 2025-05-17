@@ -153,6 +153,24 @@
         background-color: #222;
         padding: 3px 6px;
         border-radius: 4px;
+        display: none; /* Hide the original display divs */
+      }
+
+      .slider-input {
+        width: 50px;
+        margin-left: 10px;
+        text-align: right;
+        font-size: 14px;
+        background-color: #222;
+        color: #fff;
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #444;
+        outline: none;
+      }
+
+      .slider-input:focus {
+        border-color: #007aff;
       }
 
       .toggle-controls {
@@ -176,6 +194,11 @@
       .toggle-controls:hover {
         background-color: rgba(50, 50, 50, 0.9);
       }
+
+      /* Hidden file input */
+      .file-input {
+        display: none;
+      }
     </style>
   </head>
   <body>
@@ -193,9 +216,17 @@
           <button id="reset-defaults">Reset Defaults</button>
           <button id="randomize-settings">Randomize</button>
           <button id="download-settings">Save Settings</button>
+          <button id="load-settings">Load Settings</button>
+          <input
+            type="file"
+            id="settings-file-input"
+            class="file-input"
+            accept=".json"
+          />
           <button id="download-image">Download Image</button>
           <button id="clear-screen">Clear Screen</button>
           <button id="credit" class="credit-button">Credit</button>
+          <button id="toggle-pixel-mode">Pixel Mode: Off</button>
         </div>
 
         <div class="slider-container">
@@ -210,6 +241,14 @@
               id="speed-slider"
             />
             <div class="slider-value" id="speed-value">50</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="speed-input"
+              value="50"
+              data-min="1"
+              data-max="1000"
+            />
           </div>
 
           <div class="slider-row">
@@ -223,6 +262,14 @@
               id="inner-length-slider"
             />
             <div class="slider-value" id="inner-length-value">120</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="inner-length-input"
+              value="120"
+              data-min="10"
+              data-max="500"
+            />
           </div>
 
           <div class="slider-row">
@@ -236,6 +283,14 @@
               id="outer-length-slider"
             />
             <div class="slider-value" id="outer-length-value">120</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="outer-length-input"
+              value="120"
+              data-min="10"
+              data-max="500"
+            />
           </div>
 
           <div class="slider-row">
@@ -249,6 +304,14 @@
               id="trail-slider"
             />
             <div class="slider-value" id="trail-value">2000</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="trail-input"
+              value="2000"
+              data-min="100"
+              data-max="50000"
+            />
           </div>
 
           <div class="slider-row">
@@ -262,6 +325,14 @@
               id="arm-draw-skip-slider"
             />
             <div class="slider-value" id="arm-draw-skip-value">0</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="arm-draw-skip-input"
+              value="0"
+              data-min="0"
+              data-max="100"
+            />
           </div>
 
           <div class="slider-row">
@@ -276,6 +347,15 @@
               id="line-width-slider"
             />
             <div class="slider-value" id="line-width-value">1.5</div>
+            <input
+              type="text"
+              class="slider-input"
+              id="line-width-input"
+              value="1.5"
+              data-min="0.1"
+              data-max="10"
+              data-step="0.1"
+            />
           </div>
         </div>
       </div>
@@ -291,12 +371,15 @@
       const toggleControlsBtn = document.getElementById("toggle-controls");
       const controlsPanel = document.getElementById("controls-panel");
       const downloadSettingsBtn = document.getElementById("download-settings");
+      const loadSettingsBtn = document.getElementById("load-settings");
+      const settingsFileInput = document.getElementById("settings-file-input");
       const resetDefaultsBtn = document.getElementById("reset-defaults");
       const randomizeSettingsBtn =
         document.getElementById("randomize-settings");
       const downloadImageBtn = document.getElementById("download-image");
       const clearScreenBtn = document.getElementById("clear-screen");
       const creditBtn = document.getElementById("credit");
+      const togglePixelModeBtn = document.getElementById("toggle-pixel-mode");
 
       const speedSlider = document.getElementById("speed-slider");
       const innerLengthSlider = document.getElementById("inner-length-slider");
@@ -311,6 +394,13 @@
       const trailValue = document.getElementById("trail-value");
       const armDrawSkipValue = document.getElementById("arm-draw-skip-value");
       const lineWidthValue = document.getElementById("line-width-value");
+
+      const speedInput = document.getElementById("speed-input");
+      const innerLengthInput = document.getElementById("inner-length-input");
+      const outerLengthInput = document.getElementById("outer-length-input");
+      const trailInput = document.getElementById("trail-input");
+      const armDrawSkipInput = document.getElementById("arm-draw-skip-input");
+      const lineWidthInput = document.getElementById("line-width-input");
 
       // --- DEFAULT SETTINGS ---
       const DEFAULT_SETTINGS = {
@@ -330,6 +420,7 @@
       let showTrail = DEFAULT_SETTINGS.showTrail;
       let showArms = DEFAULT_SETTINGS.showArms;
       let showControls = false;
+      let pixelMode = false;
       let theta = 0;
       let trail = [];
       let trailIndex = 0;
@@ -340,27 +431,70 @@
       let armDrawSkipFrames = DEFAULT_SETTINGS.armDrawSkipFrames;
       let currentLineWidth = DEFAULT_SETTINGS.lineWidth;
 
+      // For pixel mode
+      let trailCanvas;
+      let trailCtx;
+
       // Initialize canvas size
       function setupCanvas() {
-        const oldWidth = canvas.width;
-        const oldHeight = canvas.height;
+        const oldWidth = canvas.width || window.innerWidth;
+        const oldHeight = canvas.height || window.innerHeight;
         const oldCenterX = oldWidth / 2;
         const oldCenterY = oldHeight / 2;
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        const newCenterX = newWidth / 2;
+        const newCenterY = newHeight / 2;
 
-        const newCenterX = canvas.width / 2;
-        const newCenterY = canvas.height / 2;
+        // Calculate offsets for repositioning trail points
         const offsetX = newCenterX - oldCenterX;
         const offsetY = newCenterY - oldCenterY;
 
-        if (trail.length > 0 && (offsetX !== 0 || offsetY !== 0)) {
-          for (let i = 0; i < trail.length; i++) {
-            if (trail[i]) {
-              trail[i].x += offsetX;
-              trail[i].y += offsetY;
-            }
+        // Update canvas dimensions
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Reposition all trail points relative to new center
+        for (let i = 0; i < trail.length; i++) {
+          if (trail[i]) {
+            trail[i].x += offsetX;
+            trail[i].y += offsetY;
+          }
+        }
+
+        // Initialize or resize pixel mode canvas
+        if (!trailCanvas) {
+          trailCanvas = document.createElement("canvas");
+          trailCtx = trailCanvas.getContext("2d", { willReadFrequently: true });
+        }
+
+        // If switching modes or resizing, we need to setup the pixel canvas
+        const pixelCanvasNeedsSetup =
+          !trailCanvas ||
+          trailCanvas.width !== newWidth ||
+          trailCanvas.height !== newHeight;
+
+        if (pixelCanvasNeedsSetup) {
+          // Save current content if it exists
+          let tempImg;
+          if (trailCanvas.width > 0 && trailCanvas.height > 0) {
+            tempImg = document.createElement("canvas");
+            const tempCtx = tempImg.getContext("2d");
+            tempImg.width = trailCanvas.width;
+            tempImg.height = trailCanvas.height;
+            tempCtx.drawImage(trailCanvas, 0, 0);
+          }
+
+          // Resize pixel canvas
+          trailCanvas.width = newWidth;
+          trailCanvas.height = newHeight;
+          trailCtx.fillStyle = "#000";
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+
+          // Restore content if we had any
+          if (tempImg) {
+            trailCtx.drawImage(tempImg, 0, 0);
           }
         }
       }
@@ -384,11 +518,16 @@
         toggleArmsBtn.addEventListener("click", toggleArms);
         toggleControlsBtn.addEventListener("click", toggleControls);
         downloadSettingsBtn.addEventListener("click", downloadSettings);
+        loadSettingsBtn.addEventListener("click", () =>
+          settingsFileInput.click(),
+        );
+        settingsFileInput.addEventListener("change", loadSettingsFromFile);
         resetDefaultsBtn.addEventListener("click", resetToDefaultSettings);
         randomizeSettingsBtn.addEventListener("click", setRandomSettings);
         downloadImageBtn.addEventListener("click", downloadCanvasAsImage);
         clearScreenBtn.addEventListener("click", clearScreen);
         creditBtn.addEventListener("click", openCreditLink);
+        togglePixelModeBtn.addEventListener("click", togglePixelMode);
 
         speedSlider.addEventListener("input", updateSpeed);
         innerLengthSlider.addEventListener("input", updateInnerLength);
@@ -397,6 +536,22 @@
         armDrawSkipSlider.addEventListener("input", updateArmDrawSkipFrames);
         lineWidthSlider.addEventListener("input", updateLineWidth);
 
+        // Add listeners for text inputs
+        speedInput.addEventListener("change", updateSpeedFromInput);
+        innerLengthInput.addEventListener("change", updateInnerLengthFromInput);
+        outerLengthInput.addEventListener("change", updateOuterLengthFromInput);
+        trailInput.addEventListener("change", updateTrailLengthFromInput);
+        armDrawSkipInput.addEventListener("change", updateArmDrawSkipFromInput);
+        lineWidthInput.addEventListener("change", updateLineWidthFromInput);
+
+        // Add blur events to apply changes when focus leaves the input
+        speedInput.addEventListener("blur", updateSpeedFromInput);
+        innerLengthInput.addEventListener("blur", updateInnerLengthFromInput);
+        outerLengthInput.addEventListener("blur", updateOuterLengthFromInput);
+        trailInput.addEventListener("blur", updateTrailLengthFromInput);
+        armDrawSkipInput.addEventListener("blur", updateArmDrawSkipFromInput);
+        lineWidthInput.addEventListener("blur", updateLineWidthFromInput);
+
         window.addEventListener("resize", debounce(setupCanvas, 150));
       }
 
@@ -404,11 +559,29 @@
       function updateSpeed() {
         const val = parseInt(speedSlider.value, 10);
         speedValue.textContent = val;
+        speedInput.value = val;
+        speed = val / 1000;
+      }
+
+      function updateSpeedFromInput() {
+        const val = validateNumberInput(speedInput);
+        speedInput.value = val;
+        speedSlider.value = val;
+        speedValue.textContent = val;
         speed = val / 1000;
       }
 
       function updateInnerLength() {
         const val = parseInt(innerLengthSlider.value, 10);
+        innerLengthValue.textContent = val;
+        innerLengthInput.value = val;
+        innerArmLength = val;
+      }
+
+      function updateInnerLengthFromInput() {
+        const val = validateNumberInput(innerLengthInput);
+        innerLengthInput.value = val;
+        innerLengthSlider.value = val;
         innerLengthValue.textContent = val;
         innerArmLength = val;
       }
@@ -416,51 +589,46 @@
       function updateOuterLength() {
         const val = parseInt(outerLengthSlider.value, 10);
         outerLengthValue.textContent = val;
+        outerLengthInput.value = val;
+        outerArmLength = val;
+      }
+
+      function updateOuterLengthFromInput() {
+        const val = validateNumberInput(outerLengthInput);
+        outerLengthInput.value = val;
+        outerLengthSlider.value = val;
+        outerLengthValue.textContent = val;
         outerArmLength = val;
       }
 
       function updateTrailLength() {
         trailValue.textContent = trailSlider.value;
-        const newMaxTrailLength = parseInt(trailSlider.value, 10);
+        trailInput.value = trailSlider.value;
+        maxTrailLength = parseInt(trailSlider.value, 10);
+        // trailSkipFrames is not used in pixel mode
+        // Adaptive complexity cap for MAX_PIXEL_DENSITY_SEGMENTS is also not directly applicable
+        // to permanent pixel trails in the same way as line segment trails.
+      }
 
-        if (newMaxTrailLength !== maxTrailLength) {
-          const oldMaxTrailLength = maxTrailLength;
-          const oldTrail = trail;
-          const oldTrailIndex = trailIndex;
-
-          trail = new Array(newMaxTrailLength);
-          maxTrailLength = newMaxTrailLength;
-          trailIndex = 0;
-
-          if (oldTrail.length > 0) {
-            const numPointsToCopy = Math.min(
-              newMaxTrailLength,
-              oldMaxTrailLength,
-            );
-            for (let i = 0; i < numPointsToCopy; i++) {
-              const pointIndexInOldBuffer =
-                (oldTrailIndex - 1 - i + oldMaxTrailLength) % oldMaxTrailLength;
-              if (oldTrail[pointIndexInOldBuffer]) {
-                trail[numPointsToCopy - 1 - i] =
-                  oldTrail[pointIndexInOldBuffer];
-              }
-            }
-            trailIndex = numPointsToCopy % newMaxTrailLength;
-            if (numPointsToCopy === 0 && oldTrail.some((p) => p)) {
-              trailIndex = 0;
-            } else if (
-              newMaxTrailLength > 0 &&
-              numPointsToCopy === newMaxTrailLength
-            ) {
-              trailIndex = 0;
-            }
-          }
-        }
-        trailSkipFrames = Math.max(0, Math.floor(maxTrailLength / 7500) - 1);
+      function updateTrailLengthFromInput() {
+        const val = validateNumberInput(trailInput);
+        trailInput.value = val;
+        trailSlider.value = val;
+        trailValue.textContent = val;
+        maxTrailLength = val;
       }
 
       function updateArmDrawSkipFrames() {
         const val = parseInt(armDrawSkipSlider.value, 10);
+        armDrawSkipValue.textContent = val;
+        armDrawSkipInput.value = val;
+        armDrawSkipFrames = val;
+      }
+
+      function updateArmDrawSkipFromInput() {
+        const val = validateNumberInput(armDrawSkipInput);
+        armDrawSkipInput.value = val;
+        armDrawSkipSlider.value = val;
         armDrawSkipValue.textContent = val;
         armDrawSkipFrames = val;
       }
@@ -468,6 +636,16 @@
       function updateLineWidth() {
         const val = parseFloat(lineWidthSlider.value);
         lineWidthValue.textContent = val.toFixed(1);
+        lineWidthInput.value = val.toFixed(1);
+        currentLineWidth = val;
+      }
+
+      function updateLineWidthFromInput() {
+        const val = validateNumberInput(lineWidthInput, true);
+        const formattedVal = val.toFixed(1);
+        lineWidthInput.value = formattedVal;
+        lineWidthSlider.value = val;
+        lineWidthValue.textContent = formattedVal;
         currentLineWidth = val;
       }
 
@@ -529,6 +707,26 @@
         controlsPanel.classList.toggle("visible", showControls);
       }
 
+      function togglePixelMode() {
+        pixelMode = !pixelMode;
+        togglePixelModeBtn.textContent = pixelMode
+          ? "Pixel Mode: On"
+          : "Pixel Mode: Off";
+
+        // If switching to pixel mode, initialize the trail canvas if it doesn't exist
+        if (pixelMode && (!trailCanvas || !trailCtx)) {
+          trailCanvas = document.createElement("canvas");
+          trailCtx = trailCanvas.getContext("2d", { willReadFrequently: true });
+          trailCanvas.width = canvas.width;
+          trailCanvas.height = canvas.height;
+          trailCtx.fillStyle = "#000";
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+        }
+
+        // Clear the current visualization and start fresh
+        clearScreen();
+      }
+
       function downloadSettings() {
         const settings = {
           timestamp: Date.now(),
@@ -540,6 +738,7 @@
           lineWidth: parseFloat(lineWidthSlider.value),
           showTrail: showTrail,
           showArms: showArms,
+          pixelMode: pixelMode,
         };
 
         // Log settings to console in case download is blocked
@@ -579,9 +778,11 @@
 
         showTrail = DEFAULT_SETTINGS.showTrail;
         showArms = DEFAULT_SETTINGS.showArms;
+        pixelMode = false;
 
         toggleTrailBtn.textContent = showTrail ? "Hide Trail" : "Show Trail";
         toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+        togglePixelModeBtn.textContent = "Pixel Mode: Off";
 
         updateSpeed();
         updateInnerLength();
@@ -690,6 +891,13 @@
       function clearScreen() {
         trail = new Array(maxTrailLength);
         trailIndex = 0;
+
+        // Clear pixel canvas if in pixel mode
+        if (pixelMode && trailCanvas) {
+          trailCtx.fillStyle = "#000";
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+        }
+
         drawBackground();
         if (showArms) {
           const centerX = canvas.width / 2;
@@ -758,6 +966,12 @@
       }
 
       function drawTrailOptimized() {
+        // If in pixel mode, use the pixel-based trail drawing
+        if (pixelMode) {
+          drawPixelTrail();
+          return;
+        }
+
         if (!showTrail || trail.length === 0) return;
 
         let firstValidPointIndex = -1;
@@ -803,30 +1017,69 @@
         ctx.stroke();
       }
 
+      // Pixel-based trail functions
+      function updateTrailPixel(x, y) {
+        if (!showTrail || !trailCtx) return;
+
+        x = Math.round(x);
+        y = Math.round(y);
+
+        if (x < 0 || x >= trailCanvas.width || y < 0 || y >= trailCanvas.height)
+          return;
+
+        const pixelData = trailCtx.getImageData(x, y, 1, 1).data;
+        const isBlack =
+          pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
+
+        if (isBlack) {
+          trailCtx.fillStyle = "#fff";
+          trailCtx.fillRect(x, y, 1, 1);
+        }
+      }
+
+      function drawPixelTrail() {
+        if (!showTrail || !trailCanvas) return;
+        ctx.drawImage(trailCanvas, 0, 0);
+      }
+
       // --- Animation Loop ---
       function animate() {
         if (!isPlaying) return;
 
         animationId = requestAnimationFrame(animate);
+
+        // Clear canvas
         drawBackground();
 
+        // Calculate positions
         const centerX = canvas.width / 2;
         const centerY = canvas.height / 2;
-        const innerThetaVal = theta;
-        const innerEndX = centerX + innerArmLength * Math.cos(innerThetaVal);
-        const innerEndY = centerY + innerArmLength * Math.sin(innerThetaVal);
-        const outerArmAngle = Math.PI * innerThetaVal;
-        const outerEndX = innerEndX + outerArmLength * Math.cos(outerArmAngle);
-        const outerEndY = innerEndY + outerArmLength * Math.sin(outerArmAngle);
 
-        if (
-          animationFrameCounter % (trailSkipFrames + 1) === 0 &&
-          maxTrailLength > 0
-        ) {
-          trail[trailIndex] = { x: outerEndX, y: outerEndY };
-          trailIndex = (trailIndex + 1) % maxTrailLength;
+        // Inner arm end position
+        const innerTheta = theta;
+        const innerEndX = centerX + innerArmLength * Math.cos(innerTheta);
+        const innerEndY = centerY + innerArmLength * Math.sin(innerTheta);
+
+        // Outer arm end position - rotates PI times faster
+        const outerTheta = Math.PI * theta;
+        const outerEndX = innerEndX + outerArmLength * Math.cos(outerTheta);
+        const outerEndY = innerEndY + outerArmLength * Math.sin(outerTheta);
+
+        if (pixelMode) {
+          // Update trail pixel
+          updateTrailPixel(outerEndX, outerEndY);
+        } else {
+          // Add point to trail
+          if (
+            animationFrameCounter % (trailSkipFrames + 1) === 0 &&
+            maxTrailLength > 0
+          ) {
+            trail[trailIndex] = { x: outerEndX, y: outerEndY };
+            trailIndex = (trailIndex + 1) % maxTrailLength;
+          }
         }
 
+        // Draw elements
         drawTrailOptimized();
 
         if (showArms && animationFrameCounter % (armDrawSkipFrames + 1) === 0) {
@@ -842,6 +1095,24 @@
 
         animationFrameCounter++;
         theta += speed;
+      }
+
+      function reset() {
+        theta = 0;
+        trail = new Array(maxTrailLength);
+        trailIndex = 0;
+
+        // Clear pixel canvas if using pixel mode
+        if (pixelMode && trailCanvas) {
+          trailCtx.fillStyle = "#000";
+          trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
+        }
+
+        if (!isPlaying) {
+          isPlaying = true;
+          playPauseBtn.textContent = "Pause";
+          animate();
+        }
       }
 
       // --- Initialize the App ---
@@ -873,6 +1144,114 @@
 
       // Start the app
       init();
+
+      function loadSettingsFromFile(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const settings = JSON.parse(e.target.result);
+
+            // Apply loaded settings to the UI and visualization
+            if (settings.speed !== undefined) {
+              speedSlider.value = settings.speed;
+              speedInput.value = settings.speed;
+              updateSpeed();
+            }
+
+            if (settings.innerArmLength !== undefined) {
+              innerLengthSlider.value = settings.innerArmLength;
+              innerLengthInput.value = settings.innerArmLength;
+              updateInnerLength();
+            }
+
+            if (settings.outerArmLength !== undefined) {
+              outerLengthSlider.value = settings.outerArmLength;
+              outerLengthInput.value = settings.outerArmLength;
+              updateOuterLength();
+            }
+
+            if (settings.trailLength !== undefined) {
+              trailSlider.value = settings.trailLength;
+              trailInput.value = settings.trailLength;
+              updateTrailLength();
+            }
+
+            if (settings.armDrawSkipFrames !== undefined) {
+              armDrawSkipSlider.value = settings.armDrawSkipFrames;
+              armDrawSkipInput.value = settings.armDrawSkipFrames;
+              updateArmDrawSkipFrames();
+            }
+
+            if (settings.lineWidth !== undefined) {
+              lineWidthSlider.value = settings.lineWidth;
+              lineWidthInput.value = settings.lineWidth;
+              updateLineWidth();
+            }
+
+            if (settings.showTrail !== undefined) {
+              showTrail = settings.showTrail;
+              toggleTrailBtn.textContent = showTrail
+                ? "Hide Trail"
+                : "Show Trail";
+            }
+
+            if (settings.showArms !== undefined) {
+              showArms = settings.showArms;
+              toggleArmsBtn.textContent = showArms ? "Hide Arms" : "Show Arms";
+            }
+
+            if (settings.pixelMode !== undefined) {
+              // Only change mode if needed
+              if (pixelMode !== settings.pixelMode) {
+                togglePixelMode();
+              }
+            }
+
+            // Reset the visualization with new settings
+            reset();
+
+            console.log("Settings loaded successfully:", settings);
+          } catch (error) {
+            console.error("Error loading settings:", error);
+            alert(
+              "Error loading settings. Please check that the file is a valid Pi Visualization settings JSON.",
+            );
+          }
+
+          // Clear the file input so the same file can be selected again
+          settingsFileInput.value = "";
+        };
+
+        reader.readAsText(file);
+      }
+
+      // Helper function to validate number input
+      function validateNumberInput(input, isFloat = false) {
+        const min = parseFloat(input.dataset.min);
+        const max = parseFloat(input.dataset.max);
+        let value;
+
+        if (isFloat) {
+          value = parseFloat(input.value);
+          if (isNaN(value)) {
+            value = parseFloat(input.defaultValue);
+          }
+        } else {
+          value = parseInt(input.value, 10);
+          if (isNaN(value)) {
+            value = parseInt(input.defaultValue, 10);
+          }
+        }
+
+        // Ensure value is within bounds
+        if (value < min) value = min;
+        if (value > max) value = max;
+
+        return value;
+      }
     </script>
   </body>
 </html>

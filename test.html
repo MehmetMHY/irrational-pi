@@ -332,10 +332,10 @@
       let showControls = false;
       let theta = 0;
       // Use an offscreen canvas for the pixel trail
-      let trailCanvas; 
+      let trailCanvas;
       let trailCtx;
       // maxTrailLength is less relevant for permanent pixel trails but kept for settings consistency
-      let maxTrailLength = DEFAULT_SETTINGS.trailLength; 
+      let maxTrailLength = DEFAULT_SETTINGS.trailLength;
 
       let animationFrameCounter = 0;
       let trailSkipFrames = 0;
@@ -352,27 +352,28 @@
 
         // Create or resize trail canvas
         if (!trailCanvas) {
-          trailCanvas = document.createElement('canvas');
-          trailCtx = trailCanvas.getContext('2d', { willReadFrequently: true }); // willReadFrequently for getImageData
+          trailCanvas = document.createElement("canvas");
+          trailCtx = trailCanvas.getContext("2d", { willReadFrequently: true }); // willReadFrequently for getImageData
         } else {
           // If trailCanvas exists, save its content to redraw after resize
-          const tempImg = document.createElement('canvas');
-          const tempCtx = tempImg.getContext('2d');
+          const tempImg = document.createElement("canvas");
+          const tempCtx = tempImg.getContext("2d");
           tempImg.width = oldWidth;
           tempImg.height = oldHeight;
-          if(oldWidth > 0 && oldHeight > 0) tempCtx.drawImage(trailCanvas, 0, 0);
-          
+          if (oldWidth > 0 && oldHeight > 0)
+            tempCtx.drawImage(trailCanvas, 0, 0);
+
           trailCanvas.width = canvas.width;
           trailCanvas.height = canvas.height;
-          trailCtx.fillStyle = '#000'; // Default background
+          trailCtx.fillStyle = "#000"; // Default background
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
-          if(oldWidth > 0 && oldHeight > 0) trailCtx.drawImage(tempImg, 0, 0); // Redraw old content
+          if (oldWidth > 0 && oldHeight > 0) trailCtx.drawImage(tempImg, 0, 0); // Redraw old content
           return; // Skip repositioning logic for pixel canvas
         }
-        
+
         trailCanvas.width = canvas.width;
         trailCanvas.height = canvas.height;
-        trailCtx.fillStyle = '#000';
+        trailCtx.fillStyle = "#000";
         trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
       }
 
@@ -461,7 +462,7 @@
       function resetAnimation() {
         theta = 0;
         if (trailCanvas) {
-          trailCtx.fillStyle = '#000';
+          trailCtx.fillStyle = "#000";
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
         }
         animationFrameCounter = 0;
@@ -658,7 +659,7 @@
           }
         }
 
-        canvas.toBlob(function(blob) {
+        canvas.toBlob(function (blob) {
           if (blob) {
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
@@ -671,12 +672,12 @@
           } else {
             console.error("Failed to create blob from canvas.");
           }
-        }, 'image/png');
+        }, "image/png");
       }
 
       function clearScreen() {
         if (trailCanvas) {
-          trailCtx.fillStyle = '#000';
+          trailCtx.fillStyle = "#000";
           trailCtx.fillRect(0, 0, trailCanvas.width, trailCanvas.height);
         }
         drawBackground(); // Clear the main canvas immediately
@@ -753,15 +754,17 @@
 
       function updateTrailPixel(x, y) {
         if (!showTrail || !trailCtx) return;
-        
+
         x = Math.round(x);
         y = Math.round(y);
-        
-        if (x < 0 || x >= trailCanvas.width || y < 0 || y >= trailCanvas.height) return;
-        
+
+        if (x < 0 || x >= trailCanvas.width || y < 0 || y >= trailCanvas.height)
+          return;
+
         const pixelData = trailCtx.getImageData(x, y, 1, 1).data;
-        const isBlack = pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
-        
+        const isBlack =
+          pixelData[0] === 0 && pixelData[1] === 0 && pixelData[2] === 0;
+
         if (isBlack) {
           trailCtx.fillStyle = "#fff";
           trailCtx.fillRect(x, y, 1, 1);
