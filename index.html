@@ -106,7 +106,7 @@
 
       .toggle-controls {
         position: fixed;
-        bottom: 20px;
+        top: 20px;
         right: 20px;
         width: 50px;
         height: 50px;
@@ -134,6 +134,7 @@
           <button id="reset">Reset</button>
           <button id="toggle-trail">Hide Trail</button>
           <button id="toggle-arms">Hide Arms</button>
+          <button id="download-settings">Download Settings</button>
         </div>
 
         <div class="slider-container">
@@ -201,6 +202,7 @@
       const toggleArmsBtn = document.getElementById("toggle-arms");
       const toggleControlsBtn = document.getElementById("toggle-controls");
       const controlsPanel = document.getElementById("controls-panel");
+      const downloadSettingsBtn = document.getElementById("download-settings");
 
       const speedSlider = document.getElementById("speed-slider");
       const innerLengthSlider = document.getElementById("inner-length-slider");
@@ -264,6 +266,7 @@
         toggleTrailBtn.addEventListener("click", toggleTrail);
         toggleArmsBtn.addEventListener("click", toggleArms);
         toggleControlsBtn.addEventListener("click", toggleControls);
+        downloadSettingsBtn.addEventListener("click", downloadSettings);
 
         speedSlider.addEventListener("input", updateSpeed);
         innerLengthSlider.addEventListener("input", updateInnerLength);
@@ -308,6 +311,44 @@
       function toggleControls() {
         showControls = !showControls;
         controlsPanel.classList.toggle("visible", showControls);
+      }
+
+      function downloadSettings() {
+        const settings = {
+          timestamp: Date.now(),
+          speed: parseInt(speedSlider.value),
+          innerArmLength: parseInt(innerLengthSlider.value),
+          outerArmLength: parseInt(outerLengthSlider.value),
+          trailLength: parseInt(trailSlider.value),
+          showTrail: showTrail,
+          showArms: showArms,
+        };
+
+        // Generate UUID
+        const uuid = crypto.randomUUID
+          ? crypto.randomUUID()
+          : ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
+              (
+                c ^
+                (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+              ).toString(16),
+            );
+
+        const settingsJSON = JSON.stringify(settings, null, 2);
+        const blob = new Blob([settingsJSON], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `pvs_${uuid}.json`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
       }
 
       function updateSpeed() {
