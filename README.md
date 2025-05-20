@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="250" src="./assets/images/logo.png">
+  <img width="225" src="./assets/logo.png">
 </div>
 
 <h1 align="center">Irrational Pi Algorithm Art</h1>
@@ -15,7 +15,7 @@ This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/V
 ## Preview
 
 <div align="center">
-  <img src="./assets/images/pi_visualization_1747473685628.png">
+  <img src="./assets/example.png">
 </div>
 
 ## Features
