@@ -2,7 +2,7 @@
   <img width="250" src="./assets/images/logo.png">
 </div>
 
-<h1 align="center">Irrational Pi - Algorithm Art</h1>
+<h1 align="center">Irrational Pi Algorithm Art</h1>
 
 ## Credit & Inspiration
 
