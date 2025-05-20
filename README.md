@@ -6,11 +6,11 @@
 
 ## Credit & Inspiration
 
-Credit for the core idea goes to **[@fascinating.fractals](https://www.youtube.com/@fascinating.fractals)** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) about drawing the irrational Pi. Without his creative content, this visualization would not exist. Please consider supporting his content.
+I want to give full credit for this project to **[@fascinating.fractals](https://www.youtube.com/@fascinating.fractals)** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) about drawing the irrational Pi. It was thanks to his code in the YouTube video's description and his explanation that allowed me to [Vibe Code](https://en.wikipedia.org/wiki/Vibe_coding) this project. Credit also goes to [Cursor IDE](https://www.cursor.com/), which was the main tool used to Vibe Code this project.
 
 ## About
 
-This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/Vibe_coding), that visualizes the irrational nature of Pi by using a double-arm [algorithmic system](https://en.wikipedia.org/wiki/Algorithmic_art). The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality.
+This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/Vibe_coding), that visualizes the irrational nature of Pi by using a double-arm [algorithmic system](https://en.wikipedia.org/wiki/Algorithmic_art). The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality. After seeing the video on this and seeing that the code was not available, I had to try and recreate it.
 
 ## Preview
 
@@ -41,7 +41,7 @@ This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/V
 
 1. For a quick overview: This project was built using [Cursor IDE](https://www.cursor.com/), [Claude App](https://claude.ai/chats), [ChatGPT App](https://chat.openai.com/chat), [Cha](https://github.com/MehmetMHY/cha/), and [Gemini App](https://gemini.google.com/app). The models `Claude 3.7 Sonnet`, `Google Gemini 2.5 Pro`, and `OpenAI o3` were utilized in most of those tools.
 
-2. I used [Cha](https://github.com/MehmetMHY/cha/) to extract the content and description from **@fascinating.fractals** [video](https://www.youtube.com/shorts/aUDYWYqtAR4).
+2. I used [Cha](https://github.com/MehmetMHY/cha/) to extract the content and description from **@fascinating.fractals**' [video](https://www.youtube.com/shorts/aUDYWYqtAR4).
 
 3. The content as a prompt was input into [Claude App](https://claude.ai/chats) to generate a prototype and render it through their **Interactive Artifact** side window. Claude's **Claude 3.7 Sonnet** was used for this entire process.
 
@@ -51,9 +51,9 @@ This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/V
 
 6. I tested the project in my browser by just opening the single index HTML file.
 
-7. The logo/favicon was created by taking a screenshot of one of the images the app generated, cropping it, removing the background pixels, adjusting the color values, and reducing the image resolution using MacOS's [Preview](<https://en.wikipedia.org/wiki/Preview_(macOS)>) app.
+7. The logo/favicon was created by taking a screenshot of one of the images the app generated, cropping it, removing the background pixels, adjusting the color values, and reducing the image resolution using macOS's [Preview](<https://en.wikipedia.org/wiki/Preview_(macOS)>) app.
 
-8. And finally, I created the `.gitignore` file, set up the git project's directory structure, and created a [GitHub](https://github.com/) repo, pushing everything from my local git project to that GitHub repo. I formatted the entire codebase using [fm](https://github.com/MehmetMHY/fm), and I wrote the `README.md` myself. However, I used [Cha](https://github.com/MehmetMHY/cha/) to help me draft and polish the `README.md`. After all of this, the project was done. From time to time, I do pull up [Cursor IDE](https://www.cursor.com/) and use the same model(s) to fix errors I found, but over all, the project was done at that point.
+8. And finally, I created the `.gitignore` file, set up the git project's directory structure, and created a [GitHub](https://github.com/) repo, pushing everything from my local git project to that GitHub repo. I formatted the entire codebase using [fm](https://github.com/MehmetMHY/fm), and I wrote the `README.md` myself. However, I used [Cha](https://github.com/MehmetMHY/cha/) to help me draft and polish the `README.md`. After all of this, the project was done. From time to time, I do pull up [Cursor IDE](https://www.cursor.com/) and use the same model(s) to fix errors I find, but overall, the project was done at that point.
 
 ## License
 
