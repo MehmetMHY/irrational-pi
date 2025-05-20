@@ -4,13 +4,13 @@
 
 <h1 align="center">Irrational Pi - Algorithm Art</h1>
 
+## Credit & Inspiration
+
+Credit for the core idea goes to **[@fascinating.fractals](https://www.youtube.com/@fascinating.fractals)** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) about drawing the irrational Pi. Without his creative content, this visualization would not exist. Please consider supporting his content.
+
 ## About
 
 This is a project, created through [Vibe Coding](https://en.wikipedia.org/wiki/Vibe_coding), that visualizes the irrational nature of Pi by using a double-arm [algorithmic system](https://en.wikipedia.org/wiki/Algorithmic_art). The interactive visualization draws beautiful patterns using the relationship between rotational speeds tied to Pi and customizable drawing parameters. Users can experiment with various controls to generate unique artistic interpretations of Pi's irrationality.
-
-## Inspiration
-
-Credit for the core idea goes to **[@fascinating.fractals](https://www.youtube.com/@fascinating.fractals)** and his [video](https://www.youtube.com/shorts/aUDYWYqtAR4) about drawing the irrational Pi. Without his creative content, this visualization would not exist. Please consider supporting his content.
 
 ## Preview
 
@@ -41,7 +41,7 @@ Credit for the core idea goes to **[@fascinating.fractals](https://www.youtube.c
 
 1. For a quick overview: This project was built using [Cursor IDE](https://www.cursor.com/), [Claude App](https://claude.ai/chats), [ChatGPT App](https://chat.openai.com/chat), [Cha](https://github.com/MehmetMHY/cha/), and [Gemini App](https://gemini.google.com/app). The models `Claude 3.7 Sonnet`, `Google Gemini 2.5 Pro`, and `OpenAI o3` were utilized in most of those tools.
 
-2. I used **Cha** to extract the content and description from **@fascinating.fractals** [video](https://www.youtube.com/shorts/aUDYWYqtAR4).
+2. I used [Cha](https://github.com/MehmetMHY/cha/) to extract the content and description from **@fascinating.fractals** [video](https://www.youtube.com/shorts/aUDYWYqtAR4).
 
 3. The content as a prompt was input into [Claude App](https://claude.ai/chats) to generate a prototype and render it through their **Interactive Artifact** side window. Claude's **Claude 3.7 Sonnet** was used for this entire process.
 

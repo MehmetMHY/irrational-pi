@@ -227,6 +227,7 @@
           <button id="clear-screen">Clear Screen</button>
           <button id="credit" class="credit-button">⭐ Credit</button>
           <button id="toggle-pixel-mode">Pixel Mode: Off</button>
+          <button id="code-button">Code</button>
         </div>
 
         <div class="slider-container">
@@ -381,6 +382,7 @@
       const clearScreenBtn = document.getElementById("clear-screen");
       const creditBtn = document.getElementById("credit");
       const togglePixelModeBtn = document.getElementById("toggle-pixel-mode");
+      const codeButton = document.getElementById("code-button");
 
       const speedSlider = document.getElementById("speed-slider");
       const innerLengthSlider = document.getElementById("inner-length-slider");
@@ -532,6 +534,7 @@
         clearScreenBtn.addEventListener("click", clearScreen);
         creditBtn.addEventListener("click", openCreditLink);
         togglePixelModeBtn.addEventListener("click", togglePixelMode);
+        codeButton.addEventListener("click", openCodeLink);
 
         speedSlider.addEventListener("input", updateSpeed);
         innerLengthSlider.addEventListener("input", updateInnerLength);
@@ -996,6 +999,10 @@
 
       function openCreditLink() {
         window.open("https://www.youtube.com/shorts/aUDYWYqtAR4", "_blank");
+      }
+
+      function openCodeLink() {
+        window.open("https://github.com/MehmetMHY/irrational-pi", "_blank");
       }
 
       // drawing functions
